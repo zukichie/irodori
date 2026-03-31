@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>irodori — showcase</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+      background: #0d0d14;
+      color: #fff;
+      min-height: 100vh;
+      padding: 60px 32px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+    .page-header h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .page-header p {
+      color: #666680;
+      font-size: 1rem;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .persona-card {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .persona-info {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .persona-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    .persona-desc {
+      font-size: 0.8rem;
+      color: #55556a;
+    }
+
+    canvas {
+      width: 100%;
+      border-radius: 16px;
+      display: block;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 80px;
+      color: #33334a;
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>irodori</h1>
+  <p>Color your days — 5 people, 5 years in color</p>
+</div>
+
+<div class="cards-grid" id="grid"></div>
+
+<footer>irodori — your year in color</footer>
+
+<script>
+// ---- ユーティリティ ----
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return [r,g,b];
+}
+
+function lerpColor(a, b, t) {
+  const [r1,g1,b1] = hexToRgb(a);
+  const [r2,g2,b2] = hexToRgb(b);
+  const r = Math.round(r1 + (r2-r1)*t);
+  const g = Math.round(g1 + (g2-g1)*t);
+  const bl = Math.round(b1 + (b2-b1)*t);
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${bl.toString(16).padStart(2,'0')}`;
+}
+
+// シード付き疑似乱数
+function seededRand(seed) {
+  let s = seed;
+  return function() {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    return (s >>> 0) / 0xffffffff;
+  };
+}
+
+function getDaysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
+
+// ---- ペルソナ定義 ----
+const personas = [
+  {
+    name: 'Yuki',
+    desc: '穏やかで感受性豊か。季節の移ろいを丁寧に記録する。',
+    coverage: 0.92,
+    seed: 42,
+    // 月ごとのベース色（暖かみのあるパステル系）
+    monthColors: [
+      ['#c8d6e5','#dfe6e9'],['#b2c8d4','#d5e8f0'],['#ffd6e0','#ffb8c6'],
+      ['#ffc8dd','#ffafc7'],['#a8e6cf','#b5ead7'],['#96ceb4','#88d8b0'],
+      ['#87ceeb','#74b9ff'],['#81ecec','#55efc4'],['#fdcb6e','#ffd180'],
+      ['#ffb347','#ffa94d'],['#e8a598','#e17055'],['#c8d6e5','#a8c4d4'],
+    ],
+    variation: 30,
+  },
+  {
+    name: 'Ren',
+    desc: '内省的。深い色を好む。たまに突き抜けるような明るい日がある。',
+    coverage: 0.72,
+    seed: 77,
+    monthColors: [
+      ['#2d3436','#636e72'],['#4a4a7a','#6c5ce7'],['#2c3e50','#34495e'],
+      ['#1a1a2e','#16213e'],['#0f3460','#533483'],['#2d3436','#4a4a7a'],
+      ['#0d7377','#14a085'],['#1e3799','#0c2461'],['#6c5ce7','#a29bfe'],
+      ['#8e44ad','#9b59b6'],['#2c3e50','#34495e'],['#1a1a2e','#2d3436'],
+    ],
+    brightDays: ['#f9ca24','#ff6b6b','#00cec9','#fd79a8','#00b894'],
+    brightChance: 0.08,
+    variation: 20,
+  },
+  {
+    name: 'Haru',
+    desc: '情熱的でエネルギッシュ。鮮やかな色が多い。気分の波が激しい。',
+    coverage: 0.85,
+    seed: 13,
+    monthColors: [
+      ['#ff6b6b','#ee5a24'],['#ff9f43','#ffa94d'],['#ff6b6b','#fd79a8'],
+      ['#e84393','#fd79a8'],['#ff6b6b','#ff7675'],['#e55039','#c0392b'],
+      ['#d63031','#e17055'],['#ff6b6b','#fdcb6e'],['#f0932b','#e55039'],
+      ['#e17055','#d63031'],['#c0392b','#922b21'],['#ee5a24','#e55039'],
+    ],
+    variation: 50,
+  },
+  {
+    name: 'Sora',
+    desc: '自然が好き。青と緑が中心。晴れた日と曇りの日がはっきり出る。',
+    coverage: 0.88,
+    seed: 99,
+    monthColors: [
+      ['#74b9ff','#a8d8f0'],['#81ecec','#74b9ff'],['#55efc4','#00b894'],
+      ['#00b894','#00cec9'],['#a8e6cf','#55efc4'],['#27ae60','#2ecc71'],
+      ['#0984e3','#74b9ff'],['#00cec9','#0984e3'],['#27ae60','#6ab04c'],
+      ['#00b894','#55efc4'],['#636e72','#778ca3'],['#74b9ff','#a8d8f0'],
+    ],
+    grayDays: ['#b2bec3','#636e72','#778ca3','#dfe6e9'],
+    grayChance: 0.15,
+    variation: 25,
+  },
+  {
+    name: 'Mio',
+    desc: '気分がカラフル。脈絡なく色が変わる。毎日が予測不能。',
+    coverage: 0.78,
+    seed: 55,
+    allColors: [
+      '#ff6b6b','#ffa94d','#ffe066','#74b9ff','#a29bfe','#55efc4','#fd79a8',
+      '#6c5ce7','#00b894','#fdcb6e','#e17055','#81ecec','#b2bec3','#e84393',
+      '#2d3436','#ffeaa7','#00cec9','#fab1a0','#778ca3','#f9ca24','#e55039',
+      '#c8d6e5','#8e44ad','#27ae60','#f0932b','#badc58','#535c68','#ff9ff3',
+      '#54a0ff','#ff5252','#69db7c','#ffd43b','#cc5de8','#20c997',
+    ],
+    variation: 0,
+  },
+];
+
+// ---- エントリ生成 ----
+function generateEntries(persona, year) {
+  const rand = seededRand(persona.seed);
+  const entries = {};
+
+  for (let m = 1; m <= 12; m++) {
+    const days = getDaysInMonth(year, m);
+    for (let d = 1; d <= days; d++) {
+      if (rand() > persona.coverage) continue;
+
+      const dateStr = year + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+      let color;
+
+      if (persona.allColors) {
+        // Mio: ランダムに全色から選ぶ
+        const idx = Math.floor(rand() * persona.allColors.length);
+        color = persona.allColors[idx];
+      } else {
+        const [colA, colB] = persona.monthColors[m-1];
+        let t = rand();
+
+        // 特殊日（明るい日 or 灰色日）
+        if (persona.brightDays && rand() < persona.brightChance) {
+          color = persona.brightDays[Math.floor(rand() * persona.brightDays.length)];
+        } else if (persona.grayDays && rand() < persona.grayChance) {
+          color = persona.grayDays[Math.floor(rand() * persona.grayDays.length)];
+        } else {
+          color = lerpColor(colA, colB, t);
+          // 変動を加える
+          const [r,g,b] = hexToRgb(color);
+          const v = persona.variation;
+          const nr = Math.min(255, Math.max(0, r + Math.round((rand()-0.5)*v*2)));
+          const ng = Math.min(255, Math.max(0, g + Math.round((rand()-0.5)*v*2)));
+          const nb = Math.min(255, Math.max(0, b + Math.round((rand()-0.5)*v*2)));
+          color = `#${nr.toString(16).padStart(2,'0')}${ng.toString(16).padStart(2,'0')}${nb.toString(16).padStart(2,'0')}`;
+        }
+      }
+
+      entries[dateStr] = { color };
+    }
+  }
+  return entries;
+}
+
+// ---- カード描画 ----
+function drawCard(canvas, persona, year) {
+  const DPR = 2;
+  const W = 1080, H = 1080;
+  canvas.width = W * DPR;
+  canvas.height = H * DPR;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(DPR, DPR);
+
+  const entries = generateEntries(persona, year);
+
+  // 背景
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#0d0d14');
+  bg.addColorStop(1, '#1c1c2e');
+  ctx.fillStyle = bg;
+  ctx.roundRect(0, 0, W, H, 0);
+  ctx.fill();
+
+  const PAD = 72;
+  let y = PAD;
+
+  // タイトル
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 52px "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText('irodori', PAD, y + 48);
+
+  ctx.fillStyle = '#666680';
+  ctx.font = '20px "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText(year + '  ' + persona.name + "'s year in color", PAD, y + 80);
+
+  y += 112;
+
+  // 仕切り
+  ctx.strokeStyle = '#2a2a40';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W-PAD, y); ctx.stroke();
+  y += 26;
+
+  // 月ストリップ
+  const stripW = W - PAD * 2;
+  const LABEL_W = 50;
+  const dotsAreaW = stripW - LABEL_W - 12;
+  const SLOT = Math.floor(dotsAreaW / 31);
+  const DOT = SLOT - 5;
+  const ROW_H = DOT + 11;
+
+  for (let m = 1; m <= 12; m++) {
+    const daysInMonth = getDaysInMonth(year, m);
+    const mx = PAD + LABEL_W + 12;
+
+    ctx.fillStyle = '#44445a';
+    ctx.font = '14px "Helvetica Neue", Arial, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(m + '月', PAD + LABEL_W, y + DOT - 4);
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = year + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+      const entry = entries[dateStr];
+      const dx = mx + (d-1) * SLOT;
+      const r = DOT / 2;
+
+      ctx.beginPath();
+      ctx.arc(dx + r, y + r, r, 0, Math.PI*2);
+      ctx.fillStyle = entry ? entry.color : '#1e1e30';
+      ctx.fill();
+    }
+    y += ROW_H;
+  }
+
+  y += 18;
+
+  // 仕切り
+  ctx.strokeStyle = '#2a2a40';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W-PAD, y); ctx.stroke();
+  y += 26;
+
+  // 統計
+  const recorded = Object.keys(entries).length;
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#44445a';
+  ctx.font = '15px "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText(recorded + ' days recorded', PAD, y + 18);
+
+  // トップカラー
+  const colorCount = {};
+  Object.values(entries).forEach(e => { colorCount[e.color] = (colorCount[e.color]||0)+1; });
+  const topColors = Object.entries(colorCount).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([c])=>c);
+  const cr = 12;
+  topColors.forEach((color, i) => {
+    ctx.beginPath();
+    ctx.arc(PAD + i*(cr*2+6) + cr, y + 46, cr, 0, Math.PI*2);
+    ctx.fillStyle = color;
+    ctx.fill();
+  });
+
+  // ブランド
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#2a2a40';
+  ctx.font = 'bold 15px "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText('irodori', W-PAD, H-PAD+16);
+}
+
+// ---- 描画実行 ----
+const grid = document.getElementById('grid');
+const year = 2025;
+
+personas.forEach(persona => {
+  const wrap = document.createElement('div');
+  wrap.className = 'persona-card';
+
+  const info = document.createElement('div');
+  info.className = 'persona-info';
+  info.innerHTML = `<span class="persona-name">${persona.name}</span><span class="persona-desc">${persona.desc}</span>`;
+
+  const canvas = document.createElement('canvas');
+  wrap.appendChild(info);
+  wrap.appendChild(canvas);
+  grid.appendChild(wrap);
+
+  drawCard(canvas, persona, year);
+});
+</script>
+</body>
+</html>
