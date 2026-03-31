@@ -7,379 +7,464 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* =====================
+       テーマ変数
+    ===================== */
+    /* 白 (デフォルト) */
+    :root {
+      --bg:         #ffffff;
+      --surface:    #f8f8f8;
+      --surface2:   #f2f2f2;
+      --border:     #e0e0e0;
+      --text:       #222222;
+      --text2:      #888888;
+      --text3:      #cccccc;
+      --accent:     #333333;
+      --cell-empty: #eeeeee;
+      --sw-bg:      #eeeeee;
+      --sw-active:  #ffffff;
+      --sw-text:    #333333;
+    }
+    /* ベージュ */
+    [data-theme="beige"] {
+      --bg:         #f5f0e8;
+      --surface:    #fdfaf4;
+      --surface2:   #f7f3ea;
+      --border:     #e0d8c8;
+      --text:       #3a3530;
+      --text2:      #9a9088;
+      --text3:      #c8c0b0;
+      --accent:     #5a5048;
+      --cell-empty: #ede8de;
+      --sw-bg:      #ede8de;
+      --sw-active:  #fdfaf4;
+      --sw-text:    #3a3530;
+    }
+    /* グレー */
+    [data-theme="gray"] {
+      --bg:         #e0e0e0;
+      --surface:    #ececec;
+      --surface2:   #e6e6e6;
+      --border:     #cccccc;
+      --text:       #222222;
+      --text2:      #777777;
+      --text3:      #aaaaaa;
+      --accent:     #444444;
+      --cell-empty: #d4d4d4;
+      --sw-bg:      #d4d4d4;
+      --sw-active:  #ececec;
+      --sw-text:    #222222;
+    }
+    /* 黒 */
+    [data-theme="black"] {
+      --bg:         #111111;
+      --surface:    #1e1e1e;
+      --surface2:   #282828;
+      --border:     #333333;
+      --text:       #f0f0f0;
+      --text2:      #888888;
+      --text3:      #444444;
+      --accent:     #aaaaaa;
+      --cell-empty: #222222;
+      --sw-bg:      #222222;
+      --sw-active:  #333333;
+      --sw-text:    #f0f0f0;
+    }
+
     body {
       font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Apple SD Gothic Neo', sans-serif;
-      background: #f7f5f2;
-      color: #333;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
+      transition: background 0.3s, color 0.3s;
     }
 
     header {
       padding: 20px 32px 16px;
-      border-bottom: 1px solid #e8e4df;
-      background: #fff;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
       display: flex;
       align-items: center;
       gap: 12px;
+      transition: background 0.3s, border-color 0.3s;
     }
+    header h1 { font-size: 1.4rem; font-weight: 600; letter-spacing: 0.05em; }
+    #todayLabel { font-size: 0.85rem; color: var(--text2); }
 
-    header h1 {
-      font-size: 1.4rem;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-    }
-
-    #todayLabel {
-      font-size: 0.85rem;
-      color: #999;
-    }
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 
     /* 言語切り替え */
     .lang-switcher {
-      display: flex;
-      gap: 4px;
-      margin-left: auto;
-      background: #f0ede8;
-      border-radius: 20px;
-      padding: 3px;
+      display: flex; gap: 4px;
+      background: var(--sw-bg);
+      border-radius: 20px; padding: 3px;
+      transition: background 0.3s;
     }
     .lang-btn {
-      padding: 4px 12px;
-      border-radius: 16px;
-      border: none;
-      background: transparent;
-      color: #999;
-      font-size: 0.75rem;
-      cursor: pointer;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      transition: all 0.15s;
+      padding: 4px 12px; border-radius: 16px; border: none;
+      background: transparent; color: var(--text2);
+      font-size: 0.75rem; cursor: pointer; font-weight: 600;
+      letter-spacing: 0.04em; transition: all 0.15s;
     }
-    .lang-btn.active {
-      background: #fff;
-      color: #333;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    .lang-btn.active { background: var(--sw-active); color: var(--sw-text); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+    /* 設定ボタン */
+    .settings-btn {
+      width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--border);
+      background: var(--surface); color: var(--text2);
+      font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.2s;
     }
+    .settings-btn:hover { border-color: var(--text2); }
 
     .share-btn {
-      padding: 8px 18px;
-      border: 1.5px solid #ddd;
-      border-radius: 20px;
-      background: #fff;
-      color: #555;
-      font-size: 0.82rem;
-      cursor: pointer;
-      transition: border-color 0.2s, color 0.2s;
-      letter-spacing: 0.04em;
-      white-space: nowrap;
+      padding: 8px 18px; border: 1.5px solid var(--border);
+      border-radius: 20px; background: var(--surface); color: var(--text2);
+      font-size: 0.82rem; cursor: pointer; transition: border-color 0.2s, color 0.2s;
+      letter-spacing: 0.04em; white-space: nowrap;
     }
-    .share-btn:hover { border-color: #999; color: #222; }
+    .share-btn:hover { border-color: var(--text2); color: var(--text); }
 
-    .container {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 32px 24px;
-    }
+    .container { max-width: 720px; margin: 0 auto; padding: 32px 24px; }
 
     .today-card {
-      background: #fff;
-      border-radius: 16px;
-      padding: 28px 32px;
-      margin-bottom: 40px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      background: var(--surface); border-radius: 16px; padding: 28px 32px;
+      margin-bottom: 40px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      border: 1px solid var(--border); transition: background 0.3s, border-color 0.3s;
     }
-
     .today-card h2 {
-      font-size: 0.8rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: #999;
-      margin-bottom: 20px;
+      font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text2); margin-bottom: 20px;
     }
-
-    .color-row {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      margin-bottom: 20px;
-    }
-
+    .color-row { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
     .color-preview {
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      border: 3px solid #eee;
-      transition: all 0.2s;
-      flex-shrink: 0;
+      width: 64px; height: 64px; border-radius: 50%;
+      border: 3px solid var(--border); transition: all 0.2s; flex-shrink: 0;
     }
-
     .color-controls { flex: 1; }
-
-    .color-controls label {
-      display: block;
-      font-size: 0.8rem;
-      color: #aaa;
-      margin-bottom: 6px;
-    }
-
-    #colorPicker {
-      width: 100%;
-      height: 40px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      padding: 2px;
-      background: none;
-    }
+    .color-controls label { display: block; font-size: 0.8rem; color: var(--text2); margin-bottom: 6px; }
+    #colorPicker { width: 100%; height: 40px; border: none; border-radius: 8px; cursor: pointer; padding: 2px; background: none; }
 
     .color-name-input {
-      width: 100%;
-      border: 1px solid #e8e4df;
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 0.9rem;
-      color: #555;
-      outline: none;
-      margin-top: 8px;
-      background: #fafaf8;
-      transition: border-color 0.2s;
+      width: 100%; border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 12px; font-size: 0.9rem; color: var(--text); outline: none;
+      margin-top: 8px; background: var(--surface2); transition: border-color 0.2s, background 0.3s;
     }
-    .color-name-input:focus { border-color: #bbb; background: #fff; }
-    .color-name-input::placeholder { color: #ccc; }
+    .color-name-input:focus { border-color: var(--text2); }
+    .color-name-input::placeholder { color: var(--text3); }
 
     .memo-area {
-      width: 100%;
-      border: 1px solid #e8e4df;
-      border-radius: 8px;
-      padding: 12px 14px;
-      font-size: 0.95rem;
-      line-height: 1.7;
-      resize: vertical;
-      min-height: 100px;
-      outline: none;
-      background: #fafaf8;
-      transition: border-color 0.2s;
-      font-family: inherit;
+      width: 100%; border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px 14px; font-size: 0.95rem; line-height: 1.7; resize: vertical;
+      min-height: 100px; outline: none; background: var(--surface2);
+      transition: border-color 0.2s, background 0.3s; font-family: inherit; color: var(--text);
     }
-    .memo-area:focus { border-color: #bbb; background: #fff; }
-    .memo-area::placeholder { color: #ccc; }
-
-    .memo-label {
-      font-size: 0.8rem;
-      color: #aaa;
-      margin-bottom: 6px;
-      margin-top: 16px;
-      display: block;
-    }
+    .memo-area:focus { border-color: var(--text2); }
+    .memo-area::placeholder { color: var(--text3); }
+    .memo-label { font-size: 0.8rem; color: var(--text2); margin-bottom: 6px; margin-top: 16px; display: block; }
 
     .save-btn {
-      margin-top: 20px;
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      background: #333;
-      color: #fff;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-      letter-spacing: 0.04em;
+      margin-top: 20px; width: 100%; padding: 12px; border: none; border-radius: 10px;
+      background: var(--accent); color: #fff; font-size: 0.95rem; cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s; letter-spacing: 0.04em;
     }
-    .save-btn:hover { background: #555; }
+    .save-btn:hover { opacity: 0.85; }
     .save-btn:active { transform: scale(0.98); }
     .save-btn.saved { background: #5a9e6f; }
 
     .history-section h2 {
-      font-size: 0.8rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: #999;
-      margin-bottom: 20px;
+      font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text2); margin-bottom: 20px;
     }
-
     .month-group { margin-bottom: 32px; }
-
-    .month-label {
-      font-size: 0.85rem;
-      color: #aaa;
-      margin-bottom: 12px;
-      font-weight: 500;
-    }
-
-    .entries-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 6px;
-    }
-
+    .month-label { font-size: 0.85rem; color: var(--text2); margin-bottom: 12px; font-weight: 500; }
+    .entries-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
     .day-cell {
-      aspect-ratio: 1;
-      border-radius: 8px;
-      cursor: pointer;
-      position: relative;
-      transition: transform 0.15s, box-shadow 0.15s;
-      border: 2px solid transparent;
+      aspect-ratio: 1; border-radius: 8px; cursor: pointer; position: relative;
+      transition: transform 0.15s, box-shadow 0.15s; border: 2px solid transparent;
     }
-    .day-cell:hover { transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 2; }
-    .day-cell.empty { background: #f0ede8; cursor: default; }
+    .day-cell:hover { transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 2; }
+    .day-cell.empty { background: var(--cell-empty); cursor: default; }
     .day-cell.empty:hover { transform: none; box-shadow: none; }
-    .day-cell.today-entry { border-color: #333; }
-
+    .day-cell.today-entry { border-color: var(--accent); }
     .day-cell .day-num {
-      position: absolute;
-      bottom: 3px;
-      right: 5px;
-      font-size: 0.6rem;
-      color: rgba(255,255,255,0.8);
-      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-      line-height: 1;
+      position: absolute; bottom: 3px; right: 5px; font-size: 0.6rem;
+      color: rgba(255,255,255,0.8); text-shadow: 0 1px 2px rgba(0,0,0,0.3); line-height: 1;
     }
-    .day-cell.empty .day-num { color: #ccc; text-shadow: none; }
-
-    .empty-history {
-      text-align: center;
-      color: #ccc;
-      font-size: 0.9rem;
-      padding: 40px 0;
-    }
+    .day-cell.empty .day-num { color: var(--text3); text-shadow: none; }
+    .empty-history { text-align: center; color: var(--text3); font-size: 0.9rem; padding: 40px 0; }
 
     /* 詳細モーダル */
-    .detail-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.4);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
+    .overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      z-index: 100; align-items: center; justify-content: center; padding: 20px;
     }
-    .detail-overlay.open { display: flex; }
-
-    .detail-card {
-      background: #fff;
-      border-radius: 20px;
-      padding: 32px;
-      max-width: 380px;
-      width: 90%;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    .overlay.open { display: flex; }
+    .modal-card {
+      background: var(--surface); border-radius: 20px; padding: 32px;
+      max-width: 380px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
     }
-
     .detail-color-circle { width: 72px; height: 72px; border-radius: 50%; margin: 0 auto 16px; }
-    .detail-date { text-align: center; font-size: 0.85rem; color: #999; margin-bottom: 8px; }
-    .detail-color-name { text-align: center; font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; }
-
+    .detail-date { text-align: center; font-size: 0.85rem; color: var(--text2); margin-bottom: 8px; }
+    .detail-color-name { text-align: center; font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; color: var(--text); }
     .detail-memo {
-      font-size: 0.95rem;
-      line-height: 1.7;
-      color: #555;
-      white-space: pre-wrap;
-      background: #fafaf8;
-      border-radius: 10px;
-      padding: 14px;
-      min-height: 60px;
+      font-size: 0.95rem; line-height: 1.7; color: var(--text2); white-space: pre-wrap;
+      background: var(--surface2); border-radius: 10px; padding: 14px; min-height: 60px;
     }
-
-    .detail-actions { display: flex; gap: 8px; margin-top: 20px; }
-
-    .detail-close-btn, .detail-delete-btn {
-      flex: 1;
-      padding: 10px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      font-size: 0.9rem;
-      transition: background 0.2s;
-    }
-    .detail-close-btn { background: #f0ede8; color: #555; }
-    .detail-close-btn:hover { background: #e5e0d8; }
-    .detail-delete-btn { background: #ffe8e8; color: #c0392b; }
-    .detail-delete-btn:hover { background: #ffd0d0; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+    .btn-secondary { flex: 1; padding: 10px; border-radius: 10px; border: none; cursor: pointer; font-size: 0.9rem; transition: opacity 0.2s; background: var(--surface2); color: var(--text2); }
+    .btn-secondary:hover { opacity: 0.8; }
+    .btn-danger { flex: 1; padding: 10px; border-radius: 10px; border: none; cursor: pointer; font-size: 0.9rem; background: #ffe8e8; color: #c0392b; transition: opacity 0.2s; }
+    .btn-danger:hover { opacity: 0.8; }
 
     /* シェアモーダル */
-    .share-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      z-index: 200;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .share-overlay.open { display: flex; }
-
-    .share-card {
-      background: #fff;
-      border-radius: 20px;
-      padding: 28px 28px 24px;
-      max-width: 520px;
-      width: 100%;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.25);
-    }
-
-    .share-card h3 {
-      font-size: 0.8rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: #999;
-      margin-bottom: 16px;
-    }
-
+    .share-modal { max-width: 520px; }
+    .share-modal h3 { font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text2); margin-bottom: 16px; }
     #shareCanvas { width: 100%; border-radius: 12px; display: block; }
-
     .share-year-select { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-
     .year-chip {
-      padding: 5px 14px;
-      border-radius: 20px;
-      border: 1.5px solid #e0dbd4;
-      background: #fff;
-      font-size: 0.82rem;
-      color: #777;
-      cursor: pointer;
-      transition: all 0.15s;
+      padding: 5px 14px; border-radius: 20px; border: 1.5px solid var(--border);
+      background: var(--surface2); font-size: 0.82rem; color: var(--text2);
+      cursor: pointer; transition: all 0.15s;
     }
-    .year-chip.active { border-color: #333; background: #333; color: #fff; }
+    .year-chip.active { border-color: var(--accent); background: var(--accent); color: #fff; }
+    .btn-primary { flex: 1; padding: 11px; border-radius: 10px; border: none; cursor: pointer; font-size: 0.9rem; background: var(--accent); color: #fff; transition: opacity 0.2s; }
+    .btn-primary:hover { opacity: 0.85; }
 
-    .share-actions { display: flex; gap: 8px; margin-top: 16px; }
-
-    .share-download-btn, .share-close-btn {
-      flex: 1;
-      padding: 11px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      font-size: 0.9rem;
-      transition: background 0.2s;
+    /* =====================
+       設定パネル（フルスクリーン）
+    ===================== */
+    .settings-panel {
+      display: none; position: fixed; inset: 0; z-index: 300;
+      background: var(--bg); overflow-y: auto;
+      transition: background 0.3s;
     }
-    .share-download-btn { background: #333; color: #fff; }
-    .share-download-btn:hover { background: #555; }
-    .share-close-btn { background: #f0ede8; color: #555; }
-    .share-close-btn:hover { background: #e5e0d8; }
+    .settings-panel.open { display: block; }
+    .settings-panel-inner { max-width: 560px; margin: 0 auto; padding: 32px 24px 60px; }
+
+    .settings-header {
+      display: flex; align-items: center; gap: 16px;
+      padding-bottom: 24px; border-bottom: 1px solid var(--border); margin-bottom: 36px;
+    }
+    .settings-header h2 { font-size: 1.1rem; font-weight: 600; color: var(--text); }
+    .settings-back-btn {
+      width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--border);
+      background: var(--surface); color: var(--text2); font-size: 1rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.2s;
+    }
+    .settings-back-btn:hover { border-color: var(--text2); }
+
+    .settings-section { margin-bottom: 40px; }
+    .settings-section-title {
+      font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text2); margin-bottom: 14px;
+    }
+
+    /* 言語セクション */
+    .settings-lang-row { display: flex; gap: 10px; }
+    .settings-lang-btn {
+      flex: 1; padding: 14px; border-radius: 12px; border: 1.5px solid var(--border);
+      background: var(--surface); color: var(--text2); font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s; text-align: center;
+    }
+    .settings-lang-btn.active { border-color: var(--accent); color: var(--text); background: var(--surface2); }
+
+    /* テーマセクション */
+    .theme-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 0; }
+    .theme-swatch {
+      border-radius: 12px; padding: 28px 10px; cursor: pointer;
+      border: 2px solid transparent; transition: all 0.15s;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .theme-swatch.active { box-shadow: 0 0 0 3px var(--accent); }
+    .theme-swatch-name { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; }
+
+    /* データセクション */
+    .settings-danger-zone { border: 1px solid #ffd0d0; border-radius: 12px; padding: 20px 24px; }
+    .settings-danger-title { font-size: 0.82rem; font-weight: 600; color: #c0392b; margin-bottom: 6px; }
+    .settings-danger-desc { font-size: 0.82rem; color: var(--text2); margin-bottom: 16px; }
+    .settings-reset-btn {
+      padding: 10px 20px; border-radius: 10px; border: 1.5px solid #c0392b;
+      background: transparent; color: #c0392b; font-size: 0.88rem; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .settings-reset-btn:hover { background: #ffe8e8; }
+
+    /* =====================
+       オンボーディング
+    ===================== */
+    #onboarding {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: #0d0d14; align-items: center; justify-content: center; padding: 24px;
+    }
+    #onboarding.open { display: flex; }
+
+    .onboarding-box {
+      max-width: 480px; width: 100%; text-align: center;
+    }
+
+    .onboarding-logo {
+      font-size: 2rem; font-weight: 700; letter-spacing: 0.08em; color: #fff; margin-bottom: 8px;
+    }
+    .onboarding-tagline { font-size: 0.9rem; color: #55556a; margin-bottom: 40px; }
+
+    .onboarding-step { display: none; }
+    .onboarding-step.active { display: block; }
+
+    .step-label { font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: #55556a; margin-bottom: 20px; }
+
+    /* 言語選択 */
+    .lang-options { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+    .lang-option {
+      padding: 20px 24px; border-radius: 14px; border: 2px solid #2a2a40;
+      background: #13131f; cursor: pointer; transition: all 0.15s;
+      display: flex; align-items: center; gap: 16px; text-align: left;
+    }
+    .lang-option:hover { border-color: #6c5ce7; }
+    .lang-option.selected { border-color: #6c5ce7; background: #1a1830; }
+    .lang-option-flag { font-size: 1.8rem; }
+    .lang-option-name { font-size: 1.1rem; font-weight: 600; color: #fff; }
+    .lang-option-sub { font-size: 0.82rem; color: #55556a; }
+
+    /* テーマ選択（オンボーディング） */
+    .ob-theme-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 32px; }
+    .ob-theme-swatch {
+      border-radius: 14px; padding: 32px 10px; cursor: pointer;
+      border: 2px solid transparent; transition: all 0.15s;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .ob-theme-swatch.selected { border-color: #fff; box-shadow: 0 0 0 3px #6c5ce7; }
+    .ob-theme-swatch-dots { display: flex; gap: 4px; }
+    .ob-theme-swatch-dot { width: 14px; height: 14px; border-radius: 50%; }
+    .ob-theme-swatch-name { font-size: 0.72rem; font-weight: 600; color: #fff; letter-spacing: 0.04em; }
+
+    .ob-btn {
+      width: 100%; padding: 16px; border: none; border-radius: 14px;
+      background: #6c5ce7; color: #fff; font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: opacity 0.2s; letter-spacing: 0.04em;
+    }
+    .ob-btn:hover { opacity: 0.85; }
+
+    .ob-back-btn {
+      background: none; border: none; color: #55556a; font-size: 0.85rem;
+      cursor: pointer; margin-top: 16px; text-decoration: underline;
+    }
+
+    .step-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 32px; }
+    .step-dot { width: 6px; height: 6px; border-radius: 50%; background: #2a2a40; transition: background 0.2s; }
+    .step-dot.active { background: #6c5ce7; }
   </style>
 </head>
 <body>
 
+<!-- =====================
+     オンボーディング
+===================== -->
+<div id="onboarding">
+  <div class="onboarding-box">
+    <div class="onboarding-logo">irodori</div>
+    <div class="onboarding-tagline">Color your days.</div>
+
+    <div class="step-dots">
+      <div class="step-dot active" id="dot0"></div>
+      <div class="step-dot" id="dot1"></div>
+    </div>
+
+    <!-- Step 1: 言語 -->
+    <div class="onboarding-step active" id="ob-step-0">
+      <div class="step-label">Choose your language</div>
+      <div class="lang-options">
+        <div class="lang-option" data-lang="ja">
+          <span class="lang-option-flag">🇯🇵</span>
+          <div><div class="lang-option-name">日本語</div><div class="lang-option-sub">Japanese</div></div>
+        </div>
+        <div class="lang-option" data-lang="en">
+          <span class="lang-option-flag">🇺🇸</span>
+          <div><div class="lang-option-name">English</div><div class="lang-option-sub">English</div></div>
+        </div>
+        <div class="lang-option" data-lang="ko">
+          <span class="lang-option-flag">🇰🇷</span>
+          <div><div class="lang-option-name">한국어</div><div class="lang-option-sub">Korean</div></div>
+        </div>
+      </div>
+      <button class="ob-btn" id="ob-next">次へ</button>
+    </div>
+
+    <!-- Step 2: テーマ -->
+    <div class="onboarding-step" id="ob-step-1">
+      <div class="step-label" id="ob-theme-label">テーマを選ぶ</div>
+      <div class="ob-theme-grid" id="obThemeGrid"></div>
+      <button class="ob-btn" id="ob-start">始める</button>
+      <br>
+      <button class="ob-back-btn" id="ob-back">← 戻る</button>
+    </div>
+  </div>
+</div>
+
+<!-- =====================
+     メインアプリ
+===================== -->
 <header>
   <h1>irodori</h1>
   <span id="todayLabel"></span>
-  <div class="lang-switcher">
-    <button class="lang-btn" data-lang="ja">JA</button>
-    <button class="lang-btn" data-lang="en">EN</button>
-    <button class="lang-btn" data-lang="ko">KO</button>
+  <div class="header-right">
+    <div class="lang-switcher">
+      <button class="lang-btn" data-lang="ja">JA</button>
+      <button class="lang-btn" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="ko">KO</button>
+    </div>
+    <button class="settings-btn" id="settingsBtn" title="設定">⚙</button>
+    <button class="share-btn" id="shareBtn"></button>
   </div>
-  <button class="share-btn" id="shareBtn"></button>
 </header>
 
+<!-- 設定パネル -->
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-panel-inner">
+    <div class="settings-header">
+      <button class="settings-back-btn" id="settingsBack">←</button>
+      <h2 id="settingsTitle">設定</h2>
+    </div>
+
+    <!-- 言語 -->
+    <div class="settings-section">
+      <div class="settings-section-title" id="settingsLangTitle">言語</div>
+      <div class="settings-lang-row">
+        <button class="settings-lang-btn" data-lang="ja">🇯🇵 日本語</button>
+        <button class="settings-lang-btn" data-lang="en">🇺🇸 English</button>
+        <button class="settings-lang-btn" data-lang="ko">🇰🇷 한국어</button>
+      </div>
+    </div>
+
+    <!-- テーマ -->
+    <div class="settings-section">
+      <div class="settings-section-title" id="settingsThemeTitle">テーマ</div>
+      <div class="theme-grid" id="themeGrid"></div>
+    </div>
+
+    <!-- データ -->
+    <div class="settings-section">
+      <div class="settings-section-title" id="settingsDataTitle">データ</div>
+      <div class="settings-danger-zone">
+        <div class="settings-danger-title" id="settingsResetTitle">すべてのデータを削除</div>
+        <div class="settings-danger-desc" id="settingsResetDesc">記録したすべての色・メモが削除されます。この操作は取り消せません。</div>
+        <button class="settings-reset-btn" id="settingsResetBtn">削除する</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- シェアモーダル -->
-<div class="share-overlay" id="shareOverlay">
-  <div class="share-card">
+<div class="overlay" id="shareOverlay">
+  <div class="modal-card share-modal">
     <h3 id="shareModalTitle"></h3>
     <div class="share-year-select" id="yearChips"></div>
     <canvas id="shareCanvas"></canvas>
-    <div class="share-actions">
-      <button class="share-download-btn" id="shareDownload"></button>
-      <button class="share-close-btn" id="shareClose"></button>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn-primary" id="shareDownload"></button>
+      <button class="btn-secondary" id="shareClose"></button>
     </div>
   </div>
 </div>
@@ -399,7 +484,6 @@
     <textarea class="memo-area" id="memo"></textarea>
     <button class="save-btn" id="saveBtn"></button>
   </div>
-
   <div class="history-section">
     <h2 id="historyLabel"></h2>
     <div id="historyContainer"></div>
@@ -407,128 +491,132 @@
 </div>
 
 <!-- 詳細モーダル -->
-<div class="detail-overlay" id="detailOverlay">
-  <div class="detail-card">
+<div class="overlay" id="detailOverlay">
+  <div class="modal-card">
     <div class="detail-color-circle" id="detailCircle"></div>
     <div class="detail-date" id="detailDate"></div>
     <div class="detail-color-name" id="detailColorName"></div>
     <div class="detail-memo" id="detailMemo"></div>
-    <div class="detail-actions">
-      <button class="detail-close-btn" id="detailClose"></button>
-      <button class="detail-delete-btn" id="detailDelete"></button>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="detailClose"></button>
+      <button class="btn-danger" id="detailDelete"></button>
     </div>
   </div>
 </div>
 
 <script>
-  const STORAGE_KEY = 'color-diary-entries';
-  const LANG_KEY = 'color-diary-lang';
+  const STORAGE_KEY   = 'color-diary-entries';
+  const LANG_KEY      = 'color-diary-lang';
+  const THEME_KEY     = 'color-diary-theme';
+  const ONBOARDED_KEY = 'color-diary-onboarded';
+
+  // ---- シェアカードのテーマカラー ----
+  const THEME_CANVAS = {
+    white: { bg1:'#f0f0f0', bg2:'#e4e4e4', text:'#222222', text2:'#888888', empty:'#cccccc', divider:'#cccccc', brand:'#aaaaaa', monthLabel:'#666666' },
+    beige: { bg1:'#f0ebe0', bg2:'#e5ddd0', text:'#3a3530', text2:'#9a9088', empty:'#cec6b4', divider:'#cec6b4', brand:'#b0a898', monthLabel:'#9a9088' },
+    gray:  { bg1:'#d4d4d4', bg2:'#c4c4c4', text:'#222222', text2:'#666666', empty:'#b0b0b0', divider:'#b8b8b8', brand:'#888888', monthLabel:'#666666' },
+    black: { bg1:'#0d0d14', bg2:'#1c1c2e', text:'#ffffff', text2:'#666680', empty:'#1e1e30', divider:'#2a2a40', brand:'#33334a', monthLabel:'#55556a' },
+  };
+
+  // ---- テーマ定義 ----
+  const THEMES = [
+    { id:'white',  nameJa:'白',    nameEn:'White',  nameKo:'흰색',  bg:'#ffffff', preview:'#ffffff', border:'#ddd', textPreview:'#333' },
+    { id:'beige',  nameJa:'ベージュ', nameEn:'Beige', nameKo:'베이지', bg:'#f5f0e8', preview:'#f5f0e8', border:'#d8d0c0', textPreview:'#555' },
+    { id:'gray',   nameJa:'グレー',  nameEn:'Gray',  nameKo:'회색',  bg:'#e0e0e0', preview:'#e0e0e0', border:'#bbb', textPreview:'#444' },
+    { id:'black',  nameJa:'黒',    nameEn:'Black',  nameKo:'검정',  bg:'#111111', preview:'#111111', border:'#333', textPreview:'#eee' },
+  ];
 
   // ---- 翻訳辞書 ----
   const TRANSLATIONS = {
     ja: {
-      todayColor:      '今日の色',
-      pickColor:       '色を選ぶ',
-      colorNamePH:     'この色に名前をつける（例：夕暮れのオレンジ）',
-      memoLabel:       '今日はどんな1日でしたか',
-      memoPH:          '気持ち、出来事、思ったこと…',
-      save:            '記録する',
-      update:          '更新する',
-      saved:           '保存しました ✓',
-      history:         'これまでの色',
-      empty:           'まだ記録がありません',
-      shareBtn:        'シェアカードを作る',
-      shareTitle:      'シェアカード',
-      download:        '画像を保存',
-      close:           '閉じる',
-      deleteBtn:       '削除',
-      noMemo:          '（メモなし）',
-      deleteConfirm:   (d) => `${d} の記録を削除しますか？`,
-      noEntries:       'まだ記録がありません',
-      yearChip:        (y) => `${y}年`,
-      monthLabel:      (m) => `${m}月`,
-      monthFull:       (y, m) => `${y}年${m}月`,
-      dateFormat:      (y, m, d) => `${y}年${m}月${d}日`,
-      cardSubtitle:    (y) => `${y}年  わたしの365色`,
-      cardDays:        (n) => `記録した日  ${n}日`,
+      todayColor:'今日の色', pickColor:'色を選ぶ',
+      colorNamePH:'この色に名前をつける（例：夕暮れのオレンジ）',
+      memoLabel:'今日はどんな1日でしたか', memoPH:'気持ち、出来事、思ったこと…',
+      save:'記録する', update:'更新する', saved:'保存しました ✓',
+      history:'これまでの色', empty:'まだ記録がありません',
+      shareBtn:'シェアカードを作る', shareTitle:'シェアカード',
+      download:'画像を保存', close:'閉じる', deleteBtn:'削除', noMemo:'（メモなし）',
+      deleteConfirm:(d)=>`${d} の記録を削除しますか？`, noEntries:'まだ記録がありません',
+      yearChip:(y)=>`${y}年`, monthLabel:(m)=>`${m}月`,
+      monthFull:(y,m)=>`${y}年${m}月`, dateFormat:(y,m,d)=>`${y}年${m}月${d}日`,
+      cardSubtitle:(y)=>`${y}年  わたしの365色`, cardDays:(n)=>`記録した日  ${n}日`,
+      themeModal:'テーマ', themeSelect:'背景テーマ',
+      obNext:'次へ', obStart:'始める', obBack:'← 戻る', obThemeLabel:'テーマを選ぶ',
+      settingsTitle:'設定', settingsLang:'言語', settingsTheme:'テーマ', settingsData:'データ',
+      settingsResetTitle:'すべてのデータを削除', settingsResetDesc:'記録したすべての色・メモが削除されます。この操作は取り消せません。',
+      settingsResetBtn:'削除する', settingsResetConfirm:'本当にすべてのデータを削除しますか？',
     },
     en: {
-      todayColor:      "Today's color",
-      pickColor:       'Pick a color',
-      colorNamePH:     'Name this color (e.g. sunset orange)',
-      memoLabel:       'How was your day?',
-      memoPH:          'Feelings, events, thoughts…',
-      save:            'Save',
-      update:          'Update',
-      saved:           'Saved ✓',
-      history:         'Your colors',
-      empty:           'No entries yet',
-      shareBtn:        'Create share card',
-      shareTitle:      'Share card',
-      download:        'Save image',
-      close:           'Close',
-      deleteBtn:       'Delete',
-      noMemo:          '(no memo)',
-      deleteConfirm:   (d) => `Delete the entry for ${d}?`,
-      noEntries:       'No entries yet',
-      yearChip:        (y) => `${y}`,
-      monthLabel:      (m) => ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1],
-      monthFull:       (y, m) => `${['January','February','March','April','May','June','July','August','September','October','November','December'][m-1]} ${y}`,
-      dateFormat:      (y, m, d) => `${['January','February','March','April','May','June','July','August','September','October','November','December'][m-1]} ${d}, ${y}`,
-      cardSubtitle:    (y) => `${y}  my year in color`,
-      cardDays:        (n) => `${n} days recorded`,
+      todayColor:"Today's color", pickColor:'Pick a color',
+      colorNamePH:'Name this color (e.g. sunset orange)',
+      memoLabel:'How was your day?', memoPH:'Feelings, events, thoughts…',
+      save:'Save', update:'Update', saved:'Saved ✓',
+      history:'Your colors', empty:'No entries yet',
+      shareBtn:'Create share card', shareTitle:'Share card',
+      download:'Save image', close:'Close', deleteBtn:'Delete', noMemo:'(no memo)',
+      deleteConfirm:(d)=>`Delete the entry for ${d}?`, noEntries:'No entries yet',
+      yearChip:(y)=>`${y}`,
+      monthLabel:(m)=>['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1],
+      monthFull:(y,m)=>`${['January','February','March','April','May','June','July','August','September','October','November','December'][m-1]} ${y}`,
+      dateFormat:(y,m,d)=>`${['January','February','March','April','May','June','July','August','September','October','November','December'][m-1]} ${d}, ${y}`,
+      cardSubtitle:(y)=>`${y}  my year in color`, cardDays:(n)=>`${n} days recorded`,
+      themeModal:'Theme', themeSelect:'Background theme',
+      obNext:'Next', obStart:"Let's start", obBack:'← Back', obThemeLabel:'Choose a theme',
+      settingsTitle:'Settings', settingsLang:'Language', settingsTheme:'Theme', settingsData:'Data',
+      settingsResetTitle:'Delete all data', settingsResetDesc:'All your color entries and memos will be deleted. This cannot be undone.',
+      settingsResetBtn:'Delete', settingsResetConfirm:'Are you sure you want to delete all data?',
     },
     ko: {
-      todayColor:      '오늘의 색',
-      pickColor:       '색 선택',
-      colorNamePH:     '이 색에 이름을 붙여보세요 (예: 노을빛 오렌지)',
-      memoLabel:       '오늘 하루는 어땠나요?',
-      memoPH:          '기분, 사건, 생각…',
-      save:            '기록하기',
-      update:          '수정하기',
-      saved:           '저장됨 ✓',
-      history:         '지금까지의 색',
-      empty:           '아직 기록이 없어요',
-      shareBtn:        '공유 카드 만들기',
-      shareTitle:      '공유 카드',
-      download:        '이미지 저장',
-      close:           '닫기',
-      deleteBtn:       '삭제',
-      noMemo:          '(메모 없음)',
-      deleteConfirm:   (d) => `${d} 의 기록을 삭제할까요?`,
-      noEntries:       '아직 기록이 없어요',
-      yearChip:        (y) => `${y}년`,
-      monthLabel:      (m) => `${m}월`,
-      monthFull:       (y, m) => `${y}년 ${m}월`,
-      dateFormat:      (y, m, d) => `${y}년 ${m}월 ${d}일`,
-      cardSubtitle:    (y) => `${y}년  나의 365가지 색`,
-      cardDays:        (n) => `기록한 날  ${n}일`,
+      todayColor:'오늘의 색', pickColor:'색 선택',
+      colorNamePH:'이 색에 이름을 붙여보세요 (예: 노을빛 오렌지)',
+      memoLabel:'오늘 하루는 어땠나요?', memoPH:'기분, 사건, 생각…',
+      save:'기록하기', update:'수정하기', saved:'저장됨 ✓',
+      history:'지금까지의 색', empty:'아직 기록이 없어요',
+      shareBtn:'공유 카드 만들기', shareTitle:'공유 카드',
+      download:'이미지 저장', close:'닫기', deleteBtn:'삭제', noMemo:'(메모 없음)',
+      deleteConfirm:(d)=>`${d} 의 기록을 삭제할까요?`, noEntries:'아직 기록이 없어요',
+      yearChip:(y)=>`${y}년`, monthLabel:(m)=>`${m}월`,
+      monthFull:(y,m)=>`${y}년 ${m}월`, dateFormat:(y,m,d)=>`${y}년 ${m}월 ${d}일`,
+      cardSubtitle:(y)=>`${y}년  나의 365가지 색`, cardDays:(n)=>`기록한 날  ${n}일`,
+      themeModal:'테마', themeSelect:'배경 테마',
+      obNext:'다음', obStart:'시작하기', obBack:'← 뒤로', obThemeLabel:'테마 선택',
+      settingsTitle:'설정', settingsLang:'언어', settingsTheme:'테마', settingsData:'데이터',
+      settingsResetTitle:'모든 데이터 삭제', settingsResetDesc:'기록된 모든 색상과 메모가 삭제됩니다. 이 작업은 취소할 수 없습니다.',
+      settingsResetBtn:'삭제', settingsResetConfirm:'모든 데이터를 삭제하시겠습니까?',
     },
   };
 
-  // ---- 言語管理 ----
-  let currentLang = localStorage.getItem(LANG_KEY) || 'ja';
+  // ---- 状態 ----
+  let currentLang  = localStorage.getItem(LANG_KEY)  || 'ja';
+  let currentTheme = localStorage.getItem(THEME_KEY) || 'beige';
 
   function t(key, ...args) {
     const val = TRANSLATIONS[currentLang][key];
     return typeof val === 'function' ? val(...args) : val;
   }
 
+  // ---- テーマ適用 ----
+  function applyTheme(themeId) {
+    currentTheme = themeId;
+    localStorage.setItem(THEME_KEY, themeId);
+    document.body.setAttribute('data-theme', themeId === 'white' ? '' : themeId);
+    document.querySelectorAll('.theme-swatch').forEach(s => {
+      s.classList.toggle('active', s.dataset.theme === themeId);
+    });
+  }
+
+  // ---- 言語適用 ----
   function setLang(lang) {
     currentLang = lang;
     localStorage.setItem(LANG_KEY, lang);
     document.documentElement.lang = lang;
-
-    // ボタンのactive切り替え
-    document.querySelectorAll('.lang-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.lang === lang);
-    });
-
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
     applyTranslations();
     renderHistory();
   }
 
   function applyTranslations() {
+    const todayStr = todayISO();
     document.getElementById('todayLabel').textContent = formatDate(todayStr);
     document.getElementById('todayColorLabel').textContent = t('todayColor');
     document.getElementById('pickColorLabel').textContent = t('pickColor');
@@ -542,31 +630,153 @@
     document.getElementById('shareClose').textContent = t('close');
     document.getElementById('detailClose').textContent = t('close');
     document.getElementById('detailDelete').textContent = t('deleteBtn');
-
-    // 保存ボタン：現在の状態を維持
+    document.getElementById('themeModalTitle').textContent = t('themeModal');
+    document.getElementById('themeSelectLabel').textContent = t('themeSelect');
+    document.getElementById('themeClose').textContent = t('close');
     const entries = loadEntries();
-    saveBtn.textContent = entries[todayStr] ? t('update') : t('save');
+    saveBtn.textContent = entries[todayISO()] ? t('update') : t('save');
   }
 
-  // ---- 日付フォーマット ----
+  // ---- 日付 ----
   function todayISO() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   }
-
   function formatDate(dateStr) {
-    const [y, m, d] = dateStr.split('-').map(Number);
+    const [y,m,d] = dateStr.split('-').map(Number);
     return t('dateFormat', y, m, d);
   }
 
   // ---- ストレージ ----
   function loadEntries() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
-    catch { return {}; }
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
   }
-  function saveEntries(entries) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+  function saveEntries(e) { localStorage.setItem(STORAGE_KEY, JSON.stringify(e)); }
+
+  // ---- テーマ名取得 ----
+  function getThemeName(th) {
+    if (currentLang === 'en') return th.nameEn;
+    if (currentLang === 'ko') return th.nameKo;
+    return th.nameJa;
   }
+
+  // ---- テーマグリッド描画（メイン設定） ----
+  function renderThemeGrid() {
+    const grid = document.getElementById('themeGrid');
+    grid.innerHTML = '';
+    THEMES.forEach(th => {
+      const sw = document.createElement('div');
+      sw.className = 'theme-swatch' + (currentTheme === th.id ? ' active' : '');
+      sw.dataset.theme = th.id;
+      sw.style.cssText = `background:${th.bg}; border:2px solid ${th.border};`;
+      sw.innerHTML = `<div class="theme-swatch-name" style="color:${th.textPreview}">${getThemeName(th)}</div>`;
+      sw.addEventListener('click', () => { applyTheme(th.id); renderThemeGrid(); });
+      grid.appendChild(sw);
+    });
+  }
+
+  // ---- オンボーディング ----
+  let obLang = 'ja', obTheme = 'beige', obStep = 0;
+
+  function renderObThemeGrid() {
+    const grid = document.getElementById('obThemeGrid');
+    grid.innerHTML = '';
+    THEMES.forEach(th => {
+      const sw = document.createElement('div');
+      sw.className = 'ob-theme-swatch' + (obTheme === th.id ? ' selected' : '');
+      sw.style.cssText = `background:${th.bg}; border:2px solid ${obTheme===th.id?'#fff':th.border};`;
+      const name = currentLang==='en' ? th.nameEn : currentLang==='ko' ? th.nameKo : th.nameJa;
+      sw.innerHTML = `<div class="ob-theme-swatch-name" style="color:${th.textPreview}">${name}</div>`;
+      sw.addEventListener('click', () => { obTheme = th.id; renderObThemeGrid(); });
+      grid.appendChild(sw);
+    });
+  }
+
+  function goObStep(n) {
+    obStep = n;
+    document.querySelectorAll('.onboarding-step').forEach((el,i) => el.classList.toggle('active', i===n));
+    document.querySelectorAll('.step-dot').forEach((el,i) => el.classList.toggle('active', i===n));
+    if (n===1) {
+      document.getElementById('ob-theme-label').textContent = TRANSLATIONS[obLang].obThemeLabel;
+      document.getElementById('ob-start').textContent = TRANSLATIONS[obLang].obStart;
+      document.getElementById('ob-back').textContent = TRANSLATIONS[obLang].obBack;
+      renderObThemeGrid();
+    }
+  }
+
+  document.querySelectorAll('.lang-option').forEach(el => {
+    el.addEventListener('click', () => {
+      obLang = el.dataset.lang;
+      document.querySelectorAll('.lang-option').forEach(e => e.classList.remove('selected'));
+      el.classList.add('selected');
+      document.getElementById('ob-next').textContent = TRANSLATIONS[obLang].obNext;
+    });
+  });
+
+  document.getElementById('ob-next').addEventListener('click', () => goObStep(1));
+  document.getElementById('ob-back').addEventListener('click', () => goObStep(0));
+  document.getElementById('ob-start').addEventListener('click', () => {
+    currentLang = obLang;
+    localStorage.setItem(LANG_KEY, obLang);
+    applyTheme(obTheme);
+    localStorage.setItem(ONBOARDED_KEY, '1');
+    document.getElementById('onboarding').classList.remove('open');
+    setLang(obLang);
+    renderThemeGrid();
+  });
+
+  function checkOnboarding() {
+    if (!localStorage.getItem(ONBOARDED_KEY)) {
+      document.getElementById('onboarding').classList.add('open');
+      // デフォルト選択
+      document.querySelector(`.lang-option[data-lang="ja"]`).classList.add('selected');
+    }
+  }
+
+  // ---- 設定パネル ----
+  function openSettings() {
+    renderThemeGrid();
+    updateSettingsLangBtns();
+    applySettingsTranslations();
+    document.getElementById('settingsPanel').classList.add('open');
+  }
+  function closeSettings() {
+    document.getElementById('settingsPanel').classList.remove('open');
+  }
+  function applySettingsTranslations() {
+    document.getElementById('settingsTitle').textContent   = t('settingsTitle');
+    document.getElementById('settingsLangTitle').textContent  = t('settingsLang');
+    document.getElementById('settingsThemeTitle').textContent = t('settingsTheme');
+    document.getElementById('settingsDataTitle').textContent  = t('settingsData');
+    document.getElementById('settingsResetTitle').textContent = t('settingsResetTitle');
+    document.getElementById('settingsResetDesc').textContent  = t('settingsResetDesc');
+    document.getElementById('settingsResetBtn').textContent   = t('settingsResetBtn');
+  }
+  function updateSettingsLangBtns() {
+    document.querySelectorAll('.settings-lang-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.lang === currentLang);
+    });
+  }
+  document.getElementById('settingsBtn').addEventListener('click', openSettings);
+  document.getElementById('settingsBack').addEventListener('click', closeSettings);
+  document.querySelectorAll('.settings-lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setLang(btn.dataset.lang);
+      updateSettingsLangBtns();
+      applySettingsTranslations();
+    });
+  });
+  document.getElementById('settingsResetBtn').addEventListener('click', () => {
+    if (!confirm(t('settingsResetConfirm'))) return;
+    localStorage.removeItem(STORAGE_KEY);
+    closeSettings();
+    picker.value = '#74b9ff';
+    preview.style.background = picker.value;
+    colorNameInput.value = '';
+    memoArea.value = '';
+    saveBtn.textContent = t('save');
+    renderHistory();
+  });
 
   // ---- 初期化 ----
   const todayStr = todayISO();
@@ -583,110 +793,60 @@
     memoArea.value = entries[todayStr].memo || '';
   }
   preview.style.background = picker.value;
-
   picker.addEventListener('input', () => { preview.style.background = picker.value; });
 
-  // 言語ボタン
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.addEventListener('click', () => setLang(btn.dataset.lang));
   });
 
   // ---- 保存 ----
   saveBtn.addEventListener('click', () => {
-    const entry = {
-      color: picker.value,
-      colorName: colorNameInput.value.trim(),
-      memo: memoArea.value.trim(),
-      savedAt: new Date().toISOString(),
-    };
+    const entry = { color: picker.value, colorName: colorNameInput.value.trim(), memo: memoArea.value.trim(), savedAt: new Date().toISOString() };
     const entries = loadEntries();
     entries[todayStr] = entry;
     saveEntries(entries);
-
     saveBtn.textContent = t('saved');
     saveBtn.classList.add('saved');
-    setTimeout(() => {
-      saveBtn.textContent = t('update');
-      saveBtn.classList.remove('saved');
-    }, 1800);
-
+    setTimeout(() => { saveBtn.textContent = t('update'); saveBtn.classList.remove('saved'); }, 1800);
     renderHistory();
   });
 
-  // ---- 履歴表示 ----
+  // ---- 履歴 ----
   function renderHistory() {
     const entries = loadEntries();
     const container = document.getElementById('historyContainer');
     const allDates = Object.keys(entries).sort((a,b) => b.localeCompare(a));
-
-    if (allDates.length === 0) {
-      container.innerHTML = `<div class="empty-history">${t('empty')}</div>`;
-      return;
-    }
-
+    if (allDates.length === 0) { container.innerHTML = `<div class="empty-history">${t('empty')}</div>`; return; }
     const byMonth = {};
-    allDates.forEach(d => {
-      const ym = d.slice(0,7);
-      if (!byMonth[ym]) byMonth[ym] = [];
-      byMonth[ym].push(d);
-    });
-
+    allDates.forEach(d => { const ym=d.slice(0,7); if(!byMonth[ym]) byMonth[ym]=[]; byMonth[ym].push(d); });
     container.innerHTML = '';
-    Object.keys(byMonth).sort((a,b) => b.localeCompare(a)).forEach(ym => {
-      const [y, m] = ym.split('-').map(Number);
-      const group = document.createElement('div');
-      group.className = 'month-group';
-
-      const label = document.createElement('div');
-      label.className = 'month-label';
-      label.textContent = t('monthFull', y, m);
-      group.appendChild(label);
-
-      const grid = document.createElement('div');
-      grid.className = 'entries-grid';
-
-      const firstDay = new Date(y, m-1, 1);
-      const lastDay = new Date(y, m, 0).getDate();
-      const startDow = firstDay.getDay();
-
-      for (let i = 0; i < startDow; i++) {
-        const empty = document.createElement('div');
-        empty.className = 'day-cell empty';
-        const num = document.createElement('span');
-        num.className = 'day-num';
-        empty.appendChild(num);
-        grid.appendChild(empty);
+    Object.keys(byMonth).sort((a,b)=>b.localeCompare(a)).forEach(ym => {
+      const [y,m] = ym.split('-').map(Number);
+      const group = document.createElement('div'); group.className = 'month-group';
+      const label = document.createElement('div'); label.className = 'month-label';
+      label.textContent = t('monthFull', y, m); group.appendChild(label);
+      const grid = document.createElement('div'); grid.className = 'entries-grid';
+      const startDow = new Date(y,m-1,1).getDay();
+      const lastDay = new Date(y,m,0).getDate();
+      for(let i=0;i<startDow;i++){
+        const e=document.createElement('div'); e.className='day-cell empty';
+        const n=document.createElement('span'); n.className='day-num'; e.appendChild(n); grid.appendChild(e);
       }
-
-      for (let day = 1; day <= lastDay; day++) {
-        const dateStr = `${String(y)}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-        const cell = document.createElement('div');
-        cell.className = 'day-cell';
-        if (dateStr === todayStr) cell.classList.add('today-entry');
-
-        const num = document.createElement('span');
-        num.className = 'day-num';
-        num.textContent = day;
-        cell.appendChild(num);
-
-        if (entries[dateStr]) {
-          cell.style.background = entries[dateStr].color;
-          cell.addEventListener('click', () => openDetail(dateStr, entries[dateStr]));
-        } else {
-          cell.classList.add('empty');
-        }
-
+      for(let day=1;day<=lastDay;day++){
+        const dateStr=`${String(y)}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const cell=document.createElement('div'); cell.className='day-cell';
+        if(dateStr===todayStr) cell.classList.add('today-entry');
+        const num=document.createElement('span'); num.className='day-num'; num.textContent=day; cell.appendChild(num);
+        if(entries[dateStr]){ cell.style.background=entries[dateStr].color; cell.addEventListener('click',()=>openDetail(dateStr,entries[dateStr])); }
+        else cell.classList.add('empty');
         grid.appendChild(cell);
       }
-
-      group.appendChild(grid);
-      container.appendChild(group);
+      group.appendChild(grid); container.appendChild(group);
     });
   }
 
   // ---- 詳細モーダル ----
   let detailTargetDate = null;
-
   function openDetail(dateStr, entry) {
     detailTargetDate = dateStr;
     document.getElementById('detailCircle').style.background = entry.color;
@@ -695,180 +855,90 @@
     document.getElementById('detailMemo').textContent = entry.memo || t('noMemo');
     document.getElementById('detailOverlay').classList.add('open');
   }
-
-  document.getElementById('detailClose').addEventListener('click', () => {
-    document.getElementById('detailOverlay').classList.remove('open');
-  });
-  document.getElementById('detailOverlay').addEventListener('click', e => {
-    if (e.target === document.getElementById('detailOverlay'))
-      document.getElementById('detailOverlay').classList.remove('open');
-  });
-
+  document.getElementById('detailClose').addEventListener('click', () => document.getElementById('detailOverlay').classList.remove('open'));
+  document.getElementById('detailOverlay').addEventListener('click', e => { if(e.target===document.getElementById('detailOverlay')) document.getElementById('detailOverlay').classList.remove('open'); });
   document.getElementById('detailDelete').addEventListener('click', () => {
-    if (!detailTargetDate) return;
-    if (!confirm(t('deleteConfirm', formatDate(detailTargetDate)))) return;
-    const entries = loadEntries();
-    delete entries[detailTargetDate];
-    saveEntries(entries);
-    document.getElementById('detailOverlay').classList.remove('open');
-    renderHistory();
-    if (detailTargetDate === todayStr) {
-      picker.value = '#74b9ff';
-      preview.style.background = picker.value;
-      colorNameInput.value = '';
-      memoArea.value = '';
-      saveBtn.textContent = t('save');
-    }
+    if(!detailTargetDate) return;
+    if(!confirm(t('deleteConfirm', formatDate(detailTargetDate)))) return;
+    const entries=loadEntries(); delete entries[detailTargetDate]; saveEntries(entries);
+    document.getElementById('detailOverlay').classList.remove('open'); renderHistory();
+    if(detailTargetDate===todayStr){ picker.value='#74b9ff'; preview.style.background=picker.value; colorNameInput.value=''; memoArea.value=''; saveBtn.textContent=t('save'); }
   });
 
   // ---- シェアカード ----
   let shareYear = new Date().getFullYear();
-
   document.getElementById('shareBtn').addEventListener('click', () => {
-    const entries = loadEntries();
-    const years = [...new Set(Object.keys(entries).map(d => d.slice(0,4)))].sort((a,b) => b-a);
-    if (years.length === 0) { alert(t('noEntries')); return; }
-
-    const chips = document.getElementById('yearChips');
-    chips.innerHTML = '';
-    if (!years.includes(String(shareYear))) shareYear = Number(years[0]);
-    years.forEach(y => {
-      const chip = document.createElement('button');
-      chip.className = 'year-chip' + (Number(y) === shareYear ? ' active' : '');
-      chip.textContent = t('yearChip', y);
-      chip.addEventListener('click', () => {
-        shareYear = Number(y);
-        chips.querySelectorAll('.year-chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        drawShareCard(shareYear);
-      });
+    const entries=loadEntries();
+    const years=[...new Set(Object.keys(entries).map(d=>d.slice(0,4)))].sort((a,b)=>b-a);
+    if(years.length===0){ alert(t('noEntries')); return; }
+    const chips=document.getElementById('yearChips'); chips.innerHTML='';
+    if(!years.includes(String(shareYear))) shareYear=Number(years[0]);
+    years.forEach(y=>{
+      const chip=document.createElement('button'); chip.className='year-chip'+(Number(y)===shareYear?' active':'');
+      chip.textContent=t('yearChip',y);
+      chip.addEventListener('click',()=>{ shareYear=Number(y); chips.querySelectorAll('.year-chip').forEach(c=>c.classList.remove('active')); chip.classList.add('active'); drawShareCard(shareYear); });
       chips.appendChild(chip);
     });
-
     document.getElementById('shareOverlay').classList.add('open');
     drawShareCard(shareYear);
   });
-
-  document.getElementById('shareClose').addEventListener('click', () => {
-    document.getElementById('shareOverlay').classList.remove('open');
-  });
-  document.getElementById('shareOverlay').addEventListener('click', e => {
-    if (e.target === document.getElementById('shareOverlay'))
-      document.getElementById('shareOverlay').classList.remove('open');
-  });
-
+  document.getElementById('shareClose').addEventListener('click', () => document.getElementById('shareOverlay').classList.remove('open'));
+  document.getElementById('shareOverlay').addEventListener('click', e => { if(e.target===document.getElementById('shareOverlay')) document.getElementById('shareOverlay').classList.remove('open'); });
   document.getElementById('shareDownload').addEventListener('click', () => {
-    const canvas = document.getElementById('shareCanvas');
-    const a = document.createElement('a');
-    a.download = `irodori-${shareYear}.png`;
-    a.href = canvas.toDataURL('image/png');
-    a.click();
+    const a=document.createElement('a'); a.download=`irodori-${shareYear}.png`; a.href=document.getElementById('shareCanvas').toDataURL('image/png'); a.click();
   });
 
   function drawShareCard(year) {
-    const entries = loadEntries();
-    const canvas = document.getElementById('shareCanvas');
-    const DPR = 2;
-    const W = 1080, H = 1080;
-    canvas.width = W * DPR;
-    canvas.height = H * DPR;
-    canvas.style.width = '100%';
-    canvas.style.aspectRatio = '1/1';
-    const ctx = canvas.getContext('2d');
-    ctx.scale(DPR, DPR);
+    const entries=loadEntries();
+    const canvas=document.getElementById('shareCanvas');
+    const DPR=2, W=1080, H=1080;
+    canvas.width=W*DPR; canvas.height=H*DPR; canvas.style.width='100%'; canvas.style.aspectRatio='1/1';
+    const ctx=canvas.getContext('2d'); ctx.scale(DPR,DPR);
 
-    const bg = ctx.createLinearGradient(0, 0, W, H);
-    bg.addColorStop(0, '#0d0d14');
-    bg.addColorStop(1, '#1c1c2e');
-    ctx.fillStyle = bg;
-    ctx.roundRect(0, 0, W, H, 32);
-    ctx.fill();
+    // テーマカラーを取得
+    const tc = THEME_CANVAS[currentTheme] || THEME_CANVAS.black;
 
-    const PAD = 72;
-    let y = PAD;
-
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 58px "Helvetica Neue", Arial, sans-serif';
-    ctx.fillText('irodori', PAD, y + 54);
-
-    ctx.fillStyle = '#666680';
-    ctx.font = '22px "Helvetica Neue", Arial, sans-serif';
-    ctx.fillText(t('cardSubtitle', year), PAD, y + 88);
-
-    y += 120;
-
-    ctx.strokeStyle = '#2a2a40';
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W-PAD, y); ctx.stroke();
-    y += 28;
-
-    const LABEL_W = 52;
-    const dotsAreaW = (W - PAD*2) - LABEL_W - 12;
-    const SLOT = Math.floor(dotsAreaW / 31);
-    const DOT = SLOT - 4;
-    const ROW_H = DOT + 10;
-
-    for (let m = 1; m <= 12; m++) {
-      const daysInMonth = new Date(year, m, 0).getDate();
-      const mx = PAD + LABEL_W + 12;
-
-      ctx.fillStyle = '#55556a';
-      ctx.font = '15px "Helvetica Neue", Arial, sans-serif';
-      ctx.textAlign = 'right';
-      ctx.fillText(t('monthLabel', m), PAD + LABEL_W, y + DOT - 5);
-
-      for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = year + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-        const entry = entries[dateStr];
-        const dx = mx + (d-1) * SLOT;
-        const r = DOT / 2;
-
-        ctx.beginPath();
-        ctx.arc(dx + r, y + r, r, 0, Math.PI*2);
-        ctx.fillStyle = entry ? entry.color : '#1e1e30';
-        ctx.fill();
+    const bg=ctx.createLinearGradient(0,0,W,H); bg.addColorStop(0,tc.bg1); bg.addColorStop(1,tc.bg2);
+    ctx.fillStyle=bg; ctx.roundRect(0,0,W,H,32); ctx.fill();
+    const PAD=72; let y=PAD;
+    ctx.textAlign='left'; ctx.fillStyle=tc.text; ctx.font='bold 58px "Helvetica Neue",Arial';
+    ctx.fillText('irodori',PAD,y+54);
+    ctx.fillStyle=tc.text2; ctx.font='22px "Helvetica Neue",Arial';
+    ctx.fillText(t('cardSubtitle',year),PAD,y+88);
+    y+=120;
+    ctx.strokeStyle=tc.divider; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke(); y+=28;
+    const LABEL_W=52, dotsAreaW=(W-PAD*2)-LABEL_W-12;
+    const SLOT=Math.floor(dotsAreaW/31), DOT=SLOT-4, ROW_H=DOT+10;
+    for(let m=1;m<=12;m++){
+      const daysInMonth=new Date(year,m,0).getDate(), mx=PAD+LABEL_W+12;
+      ctx.fillStyle=tc.monthLabel; ctx.font='15px "Helvetica Neue",Arial'; ctx.textAlign='right';
+      ctx.fillText(t('monthLabel',m),PAD+LABEL_W,y+DOT-5);
+      for(let d=1;d<=daysInMonth;d++){
+        const ds=year+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+        const entry=entries[ds], dx=mx+(d-1)*SLOT, r=DOT/2;
+        ctx.beginPath(); ctx.arc(dx+r,y+r,r,0,Math.PI*2);
+        ctx.fillStyle=entry?entry.color:tc.empty; ctx.fill();
       }
-
-      y += ROW_H;
+      y+=ROW_H;
     }
-
-    y += 20;
-
-    ctx.strokeStyle = '#2a2a40';
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W-PAD, y); ctx.stroke();
-    y += 28;
-
-    const yearEntries = Object.entries(entries).filter(([k]) => k.startsWith(String(year)));
-    const recordedDays = yearEntries.length;
-
-    const colorCount = {};
-    yearEntries.forEach(([, e]) => { colorCount[e.color] = (colorCount[e.color]||0)+1; });
-    const topColors = Object.entries(colorCount).sort((a,b) => b[1]-a[1]).slice(0,7).map(([c]) => c);
-
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#55556a';
-    ctx.font = '16px "Helvetica Neue", Arial, sans-serif';
-    ctx.fillText(t('cardDays', recordedDays), PAD, y + 20);
-
-    const circleR = 14;
-    topColors.forEach((color, i) => {
-      ctx.beginPath();
-      ctx.arc(PAD + i*(circleR*2+8) + circleR, y + 50, circleR, 0, Math.PI*2);
-      ctx.fillStyle = color;
-      ctx.fill();
-    });
-
-    ctx.textAlign = 'right';
-    ctx.fillStyle = '#33334a';
-    ctx.font = 'bold 16px "Helvetica Neue", Arial, sans-serif';
-    ctx.fillText('irodori', W-PAD, H-PAD+16);
+    y+=20;
+    ctx.strokeStyle=tc.divider; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke(); y+=28;
+    const yearEntries=Object.entries(entries).filter(([k])=>k.startsWith(String(year)));
+    const colorCount={}; yearEntries.forEach(([,e])=>{colorCount[e.color]=(colorCount[e.color]||0)+1;});
+    const topColors=Object.entries(colorCount).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([c])=>c);
+    ctx.textAlign='left'; ctx.fillStyle=tc.text2; ctx.font='16px "Helvetica Neue",Arial';
+    ctx.fillText(t('cardDays',yearEntries.length),PAD,y+20);
+    const circleR=14;
+    topColors.forEach((color,i)=>{ ctx.beginPath(); ctx.arc(PAD+i*(circleR*2+8)+circleR,y+50,circleR,0,Math.PI*2); ctx.fillStyle=color; ctx.fill(); });
+    ctx.textAlign='right'; ctx.fillStyle=tc.brand; ctx.font='bold 16px "Helvetica Neue",Arial';
+    ctx.fillText('irodori',W-PAD,H-PAD+16);
   }
 
-  // ---- 初回適用 ----
+  // ---- 起動 ----
+  applyTheme(currentTheme);
   setLang(currentLang);
   renderHistory();
+  checkOnboarding();
 </script>
 </body>
 </html>
