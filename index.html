@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>irodori</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -281,6 +282,16 @@
     .theme-swatch.active { box-shadow: 0 0 0 3px var(--accent); }
     .theme-swatch-name { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; }
 
+    /* 名前セクション */
+    .settings-name-input {
+      width: 100%; padding: 12px 14px; border-radius: 10px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      color: var(--text); font-size: 0.95rem; outline: none;
+      transition: border-color 0.2s;
+    }
+    .settings-name-input:focus { border-color: var(--accent); }
+    .settings-name-input::placeholder { color: var(--text3); }
+
     /* データセクション */
     .settings-danger-zone { border: 1px solid #ffd0d0; border-radius: 12px; padding: 20px 24px; }
     .settings-danger-title { font-size: 0.82rem; font-weight: 600; color: #c0392b; margin-bottom: 6px; }
@@ -352,6 +363,15 @@
       cursor: pointer; margin-top: 16px; text-decoration: underline;
     }
 
+    .ob-name-input {
+      width: 100%; padding: 14px 16px; border-radius: 12px;
+      border: 2px solid #2a2a40; background: #1a1a2e; color: #fff;
+      font-size: 1.05rem; margin-bottom: 20px; text-align: center; outline: none;
+      transition: border-color 0.2s;
+    }
+    .ob-name-input:focus { border-color: #6c5ce7; }
+    .ob-name-input::placeholder { color: #44445a; }
+
     .step-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 32px; }
     .step-dot { width: 6px; height: 6px; border-radius: 50%; background: #2a2a40; transition: background 0.2s; }
     .step-dot.active { background: #6c5ce7; }
@@ -370,6 +390,7 @@
     <div class="step-dots">
       <div class="step-dot active" id="dot0"></div>
       <div class="step-dot" id="dot1"></div>
+      <div class="step-dot" id="dot2"></div>
     </div>
 
     <!-- Step 1: 言語 -->
@@ -392,8 +413,17 @@
       <button class="ob-btn" id="ob-next">次へ</button>
     </div>
 
-    <!-- Step 2: テーマ -->
+    <!-- Step 2: 名前 -->
     <div class="onboarding-step" id="ob-step-1">
+      <div class="step-label" id="ob-name-label">あなたの名前は？</div>
+      <input type="text" class="ob-name-input" id="obNameInput" placeholder="名前を入力してください" maxlength="20" autocomplete="off">
+      <button class="ob-btn" id="ob-name-next">次へ</button>
+      <br>
+      <button class="ob-back-btn" id="ob-name-back">← 戻る</button>
+    </div>
+
+    <!-- Step 3: テーマ -->
+    <div class="onboarding-step" id="ob-step-2">
       <div class="step-label" id="ob-theme-label">テーマを選ぶ</div>
       <div class="ob-theme-grid" id="obThemeGrid"></div>
       <button class="ob-btn" id="ob-start">始める</button>
@@ -426,6 +456,12 @@
     <div class="settings-header">
       <button class="settings-back-btn" id="settingsBack">←</button>
       <h2 id="settingsTitle">設定</h2>
+    </div>
+
+    <!-- 名前 -->
+    <div class="settings-section">
+      <div class="settings-section-title" id="settingsNameTitle">名前</div>
+      <input type="text" class="settings-name-input" id="settingsNameInput" placeholder="あなたの名前（例：Yuki）" maxlength="20" autocomplete="off">
     </div>
 
     <!-- 言語 -->
@@ -508,6 +544,7 @@
   const STORAGE_KEY   = 'color-diary-entries';
   const LANG_KEY      = 'color-diary-lang';
   const THEME_KEY     = 'color-diary-theme';
+  const NAME_KEY      = 'color-diary-name';
   const ONBOARDED_KEY = 'color-diary-onboarded';
 
   // ---- シェアカードのテーマカラー ----
@@ -539,12 +576,14 @@
       deleteConfirm:(d)=>`${d} の記録を削除しますか？`, noEntries:'まだ記録がありません',
       yearChip:(y)=>`${y}年`, monthLabel:(m)=>`${m}月`,
       monthFull:(y,m)=>`${y}年${m}月`, dateFormat:(y,m,d)=>`${y}年${m}月${d}日`,
-      cardSubtitle:(y)=>`${y}年  わたしの365色`, cardDays:(n)=>`記録した日  ${n}日`,
+      cardSubtitle:(y)=>{ const n=localStorage.getItem(NAME_KEY); return n?`${y}年  ${n}の365色`:`${y}年  わたしの365色`; }, cardDays:(n)=>`記録した日  ${n}日`,
       themeModal:'テーマ', themeSelect:'背景テーマ',
       obNext:'次へ', obStart:'始める', obBack:'← 戻る', obThemeLabel:'テーマを選ぶ',
       settingsTitle:'設定', settingsLang:'言語', settingsTheme:'テーマ', settingsData:'データ',
       settingsResetTitle:'すべてのデータを削除', settingsResetDesc:'記録したすべての色・メモが削除されます。この操作は取り消せません。',
       settingsResetBtn:'削除する', settingsResetConfirm:'本当にすべてのデータを削除しますか？',
+      settingsName:'名前', settingsNamePH:'あなたの名前（例：Yuki）',
+      obNameLabel:'あなたの名前は？', obNamePH:'名前を入力してください', obNameSkip:'スキップ',
     },
     en: {
       todayColor:"Today's color", pickColor:'Pick a color',
@@ -559,12 +598,14 @@
       monthLabel:(m)=>['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1],
       monthFull:(y,m)=>`${['January','February','March','April','May','June','July','August','September','October','November','December'][m-1]} ${y}`,
       dateFormat:(y,m,d)=>`${['January','February','March','April','May','June','July','August','September','October','November','December'][m-1]} ${d}, ${y}`,
-      cardSubtitle:(y)=>`${y}  my year in color`, cardDays:(n)=>`${n} days recorded`,
+      cardSubtitle:(y)=>{ const n=localStorage.getItem(NAME_KEY); return n?`${y}  ${n}'s year in color`:`${y}  my year in color`; }, cardDays:(n)=>`${n} days recorded`,
       themeModal:'Theme', themeSelect:'Background theme',
       obNext:'Next', obStart:"Let's start", obBack:'← Back', obThemeLabel:'Choose a theme',
       settingsTitle:'Settings', settingsLang:'Language', settingsTheme:'Theme', settingsData:'Data',
       settingsResetTitle:'Delete all data', settingsResetDesc:'All your color entries and memos will be deleted. This cannot be undone.',
       settingsResetBtn:'Delete', settingsResetConfirm:'Are you sure you want to delete all data?',
+      settingsName:'Name', settingsNamePH:'Your name (e.g. Yuki)',
+      obNameLabel:"What's your name?", obNamePH:'Enter your name', obNameSkip:'Skip',
     },
     ko: {
       todayColor:'오늘의 색', pickColor:'색 선택',
@@ -577,12 +618,14 @@
       deleteConfirm:(d)=>`${d} 의 기록을 삭제할까요?`, noEntries:'아직 기록이 없어요',
       yearChip:(y)=>`${y}년`, monthLabel:(m)=>`${m}월`,
       monthFull:(y,m)=>`${y}년 ${m}월`, dateFormat:(y,m,d)=>`${y}년 ${m}월 ${d}일`,
-      cardSubtitle:(y)=>`${y}년  나의 365가지 색`, cardDays:(n)=>`기록한 날  ${n}일`,
+      cardSubtitle:(y)=>{ const n=localStorage.getItem(NAME_KEY); return n?`${y}년  ${n}의 365가지 색`:`${y}년  나의 365가지 색`; }, cardDays:(n)=>`기록한 날  ${n}일`,
       themeModal:'테마', themeSelect:'배경 테마',
       obNext:'다음', obStart:'시작하기', obBack:'← 뒤로', obThemeLabel:'테마 선택',
       settingsTitle:'설정', settingsLang:'언어', settingsTheme:'테마', settingsData:'데이터',
       settingsResetTitle:'모든 데이터 삭제', settingsResetDesc:'기록된 모든 색상과 메모가 삭제됩니다. 이 작업은 취소할 수 없습니다.',
       settingsResetBtn:'삭제', settingsResetConfirm:'모든 데이터를 삭제하시겠습니까?',
+      settingsName:'이름', settingsNamePH:'이름을 입력하세요 (예: Yuki)',
+      obNameLabel:'이름이 무엇인가요?', obNamePH:'이름을 입력하세요', obNameSkip:'건너뛰기',
     },
   };
 
@@ -630,9 +673,9 @@
     document.getElementById('shareClose').textContent = t('close');
     document.getElementById('detailClose').textContent = t('close');
     document.getElementById('detailDelete').textContent = t('deleteBtn');
-    document.getElementById('themeModalTitle').textContent = t('themeModal');
-    document.getElementById('themeSelectLabel').textContent = t('themeSelect');
-    document.getElementById('themeClose').textContent = t('close');
+    const themeModalTitle = document.getElementById('themeModalTitle'); if (themeModalTitle) themeModalTitle.textContent = t('themeModal');
+    const themeSelectLabel = document.getElementById('themeSelectLabel'); if (themeSelectLabel) themeSelectLabel.textContent = t('themeSelect');
+    const themeClose = document.getElementById('themeClose'); if (themeClose) themeClose.textContent = t('close');
     const entries = loadEntries();
     saveBtn.textContent = entries[todayISO()] ? t('update') : t('save');
   }
@@ -697,6 +740,12 @@
     document.querySelectorAll('.onboarding-step').forEach((el,i) => el.classList.toggle('active', i===n));
     document.querySelectorAll('.step-dot').forEach((el,i) => el.classList.toggle('active', i===n));
     if (n===1) {
+      document.getElementById('ob-name-label').textContent = TRANSLATIONS[obLang].obNameLabel;
+      document.getElementById('obNameInput').placeholder = TRANSLATIONS[obLang].obNamePH;
+      document.getElementById('ob-name-next').textContent = TRANSLATIONS[obLang].obNext;
+      document.getElementById('ob-name-back').textContent = TRANSLATIONS[obLang].obBack;
+    }
+    if (n===2) {
       document.getElementById('ob-theme-label').textContent = TRANSLATIONS[obLang].obThemeLabel;
       document.getElementById('ob-start').textContent = TRANSLATIONS[obLang].obStart;
       document.getElementById('ob-back').textContent = TRANSLATIONS[obLang].obBack;
@@ -714,10 +763,14 @@
   });
 
   document.getElementById('ob-next').addEventListener('click', () => goObStep(1));
-  document.getElementById('ob-back').addEventListener('click', () => goObStep(0));
+  document.getElementById('ob-name-next').addEventListener('click', () => goObStep(2));
+  document.getElementById('ob-name-back').addEventListener('click', () => goObStep(0));
+  document.getElementById('ob-back').addEventListener('click', () => goObStep(1));
   document.getElementById('ob-start').addEventListener('click', () => {
     currentLang = obLang;
     localStorage.setItem(LANG_KEY, obLang);
+    const obName = document.getElementById('obNameInput').value.trim();
+    if (obName) localStorage.setItem(NAME_KEY, obName);
     applyTheme(obTheme);
     localStorage.setItem(ONBOARDED_KEY, '1');
     document.getElementById('onboarding').classList.remove('open');
@@ -738,6 +791,7 @@
     renderThemeGrid();
     updateSettingsLangBtns();
     applySettingsTranslations();
+    document.getElementById('settingsNameInput').value = localStorage.getItem(NAME_KEY) || '';
     document.getElementById('settingsPanel').classList.add('open');
   }
   function closeSettings() {
@@ -745,6 +799,8 @@
   }
   function applySettingsTranslations() {
     document.getElementById('settingsTitle').textContent   = t('settingsTitle');
+    document.getElementById('settingsNameTitle').textContent  = t('settingsName');
+    document.getElementById('settingsNameInput').placeholder  = t('settingsNamePH');
     document.getElementById('settingsLangTitle').textContent  = t('settingsLang');
     document.getElementById('settingsThemeTitle').textContent = t('settingsTheme');
     document.getElementById('settingsDataTitle').textContent  = t('settingsData');
@@ -759,6 +815,11 @@
   }
   document.getElementById('settingsBtn').addEventListener('click', openSettings);
   document.getElementById('settingsBack').addEventListener('click', closeSettings);
+  document.getElementById('settingsNameInput').addEventListener('input', () => {
+    const name = document.getElementById('settingsNameInput').value.trim();
+    if (name) localStorage.setItem(NAME_KEY, name);
+    else localStorage.removeItem(NAME_KEY);
+  });
   document.querySelectorAll('.settings-lang-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       setLang(btn.dataset.lang);

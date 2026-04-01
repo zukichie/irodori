@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>irodori — marketing assets</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+      background: #f7f5f2;
+      color: #333;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #fff;
+      border-bottom: 1px solid #e8e4df;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    header h1 { font-size: 1.2rem; font-weight: 600; }
+    header span { font-size: 0.8rem; color: #aaa; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+
+    .section { margin-bottom: 56px; }
+    .section-title {
+      font-size: 0.75rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #aaa;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e8e4df;
+    }
+
+    .cards-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    .asset-card {
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+
+    .asset-canvas-wrap {
+      background: #1a1a1a;
+      padding: 0;
+      line-height: 0;
+    }
+
+    .asset-canvas-wrap canvas { width: 100%; display: block; }
+
+    .asset-footer {
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .asset-label { font-size: 0.82rem; color: #555; }
+    .asset-size { font-size: 0.72rem; color: #bbb; }
+
+    .dl-btn {
+      padding: 7px 16px;
+      border-radius: 20px;
+      border: none;
+      background: #333;
+      color: #fff;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .dl-btn:hover { background: #555; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>irodori</h1>
+  <span>marketing assets</span>
+</header>
+
+<div class="container">
+
+  <!-- 1. アプリ紹介カード -->
+  <div class="section">
+    <div class="section-title">アプリ紹介カード</div>
+    <div class="cards-row" id="introCards"></div>
+  </div>
+
+  <!-- 2. 問いかけカード -->
+  <div class="section">
+    <div class="section-title">問いかけカード（エンゲージメント用）</div>
+    <div class="cards-row" id="questionCards"></div>
+  </div>
+
+  <!-- 3. 年間カラーカード（ペルソナ5人分） -->
+  <div class="section">
+    <div class="section-title">年間カラーカード — 使用例 5パターン</div>
+    <div class="cards-row" id="yearCards"></div>
+  </div>
+
+  <!-- 4. 月間カード -->
+  <div class="section">
+    <div class="section-title">月間カード — 毎月末投稿用</div>
+    <div class="cards-row" id="monthCards"></div>
+  </div>
+
+  <!-- 5. 季節カード -->
+  <div class="section">
+    <div class="section-title">季節カード — 春夏秋冬</div>
+    <div class="cards-row" id="seasonCards"></div>
+  </div>
+
+  <!-- 6. 今日の1色テンプレート -->
+  <div class="section">
+    <div class="section-title">今日の1色テンプレート</div>
+    <div class="cards-row" id="colorCards"></div>
+  </div>
+
+  <!-- 7. Before/After カード -->
+  <div class="section">
+    <div class="section-title">Before / After カード</div>
+    <div class="cards-row" id="beforeAfterCards"></div>
+  </div>
+
+  <!-- 8. 統計カード -->
+  <div class="section">
+    <div class="section-title">統計カード</div>
+    <div class="cards-row" id="statsCards"></div>
+  </div>
+
+  <!-- 9. ストーリーズ縦型カード -->
+  <div class="section">
+    <div class="section-title">ストーリーズ用縦型カード（1080×1920）</div>
+    <div class="cards-row" id="storyCards"></div>
+  </div>
+
+  <!-- 10. ハッシュタグ紹介カード -->
+  <div class="section">
+    <div class="section-title">ハッシュタグ紹介カード</div>
+    <div class="cards-row" id="hashtagCards"></div>
+  </div>
+
+  <!-- 11. 多言語紹介カード -->
+  <div class="section">
+    <div class="section-title">多言語紹介カード</div>
+    <div class="cards-row" id="langCards"></div>
+  </div>
+
+</div>
+
+<script>
+// ---- ユーティリティ ----
+function hexToRgb(hex) {
+  return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)];
+}
+function lerpColor(a, b, t) {
+  const c1=hexToRgb(a), c2=hexToRgb(b);
+  const r=Math.round(c1[0]+(c2[0]-c1[0])*t);
+  const g=Math.round(c1[1]+(c2[1]-c1[1])*t);
+  const bl=Math.round(c1[2]+(c2[2]-c1[2])*t);
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${bl.toString(16).padStart(2,'0')}`;
+}
+function seededRand(seed) {
+  let s = seed;
+  return () => { s=(s*1664525+1013904223)&0xffffffff; return (s>>>0)/0xffffffff; };
+}
+function getDays(y,m){ return new Date(y,m,0).getDate(); }
+
+function makeCard(label, size, drawFn, filename) {
+  const wrap = document.createElement('div');
+  wrap.className = 'asset-card';
+
+  const canvasWrap = document.createElement('div');
+  canvasWrap.className = 'asset-canvas-wrap';
+
+  const canvas = document.createElement('canvas');
+  canvasWrap.appendChild(canvas);
+  wrap.appendChild(canvasWrap);
+
+  const footer = document.createElement('div');
+  footer.className = 'asset-footer';
+  footer.innerHTML = `<div><div class="asset-label">${label}</div><div class="asset-size">${size}</div></div>`;
+
+  const btn = document.createElement('button');
+  btn.className = 'dl-btn';
+  btn.textContent = '保存';
+  btn.addEventListener('click', () => {
+    const a = document.createElement('a');
+    a.download = filename;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  });
+  footer.appendChild(btn);
+  wrap.appendChild(footer);
+
+  drawFn(canvas);
+  return wrap;
+}
+
+// ---- 背景ヘルパー ----
+function darkBg(ctx, W, H) {
+  const bg = ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#0d0d14');
+  bg.addColorStop(1,'#1c1c2e');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0,0,W,H);
+}
+
+function setupCanvas(canvas, W, H) {
+  const DPR = 2;
+  canvas.width = W*DPR; canvas.height = H*DPR;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(DPR, DPR);
+  return ctx;
+}
+
+// ==============================
+// 1. アプリ紹介カード
+// ==============================
+
+// 1a: メインビジュアル（正方形）
+function drawIntroMain(canvas) {
+  const W=1080, H=1080;
+  const ctx = setupCanvas(canvas, W, H);
+  darkBg(ctx, W, H);
+
+  // 大きなカラーサークルたち
+  const colors = ['#ff6b6b','#ffa94d','#ffe066','#74b9ff','#a29bfe','#55efc4','#fd79a8','#00b894','#fdcb6e','#e17055','#81ecec','#6c5ce7'];
+  const cx = W/2, cy = H/2 - 40;
+  const R = 200;
+  colors.forEach((c, i) => {
+    const angle = (i/colors.length)*Math.PI*2 - Math.PI/2;
+    const x = cx + Math.cos(angle)*R;
+    const y = cy + Math.sin(angle)*R;
+    ctx.beginPath();
+    ctx.arc(x, y, 44, 0, Math.PI*2);
+    ctx.fillStyle = c;
+    ctx.fill();
+  });
+  // 中心
+  ctx.beginPath();
+  ctx.arc(cx, cy, 60, 0, Math.PI*2);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  ctx.fillStyle = '#111';
+  ctx.font = 'bold 22px "Helvetica Neue", Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('irodori', cx, cy+8);
+
+  // テキスト
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 52px "Helvetica Neue", Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('今日は何色でしたか？', cx, cy + 320);
+
+  ctx.fillStyle = '#55556a';
+  ctx.font = '22px "Helvetica Neue", Arial';
+  ctx.fillText('Color your days.', cx, cy + 360);
+
+  ctx.fillStyle = '#33334a';
+  ctx.font = '16px "Helvetica Neue", Arial';
+  ctx.fillText('myirodori.com', cx, H - 48);
+}
+
+// 1b: 機能説明カード
+function drawIntroFeature(canvas) {
+  const W=1080, H=1080;
+  const ctx = setupCanvas(canvas, W, H);
+  darkBg(ctx, W, H);
+
+  const PAD = 80;
+  let y = PAD + 20;
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 44px "Helvetica Neue", Arial';
+  ctx.textAlign = 'left';
+  ctx.fillText('irodori', PAD, y);
+  y += 48;
+
+  ctx.fillStyle = '#55556a';
+  ctx.font = '20px "Helvetica Neue", Arial';
+  ctx.fillText('色で残す、毎日の記録', PAD, y);
+  y += 60;
+
+  ctx.strokeStyle = '#2a2a40';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W-PAD, y); ctx.stroke();
+  y += 50;
+
+  const features = [
+    { icon: '#ff6b6b', text: '今日の気分を色で選ぶ', sub: 'Pick a color that matches your day' },
+    { icon: '#74b9ff', text: '色に名前をつける', sub: 'Name it — "sunset orange", "rainy blue"' },
+    { icon: '#55efc4', text: '一言メモを残す', sub: 'A short note, or just a color' },
+    { icon: '#a29bfe', text: '1年をカードにしてシェア', sub: 'Your 365 colors, visualized' },
+  ];
+
+  features.forEach(f => {
+    ctx.beginPath();
+    ctx.arc(PAD + 20, y + 20, 20, 0, Math.PI*2);
+    ctx.fillStyle = f.icon;
+    ctx.fill();
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 24px "Helvetica Neue", Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(f.text, PAD + 56, y + 16);
+
+    ctx.fillStyle = '#55556a';
+    ctx.font = '16px "Helvetica Neue", Arial';
+    ctx.fillText(f.sub, PAD + 56, y + 38);
+
+    y += 80;
+  });
+
+  y += 20;
+  ctx.strokeStyle = '#2a2a40';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W-PAD, y); ctx.stroke();
+  y += 40;
+
+  ctx.fillStyle = '#444460';
+  ctx.font = '18px "Helvetica Neue", Arial';
+  ctx.textAlign = 'left';
+  ctx.fillText('日本語 · English · 한국어', PAD, y);
+
+  ctx.fillStyle = '#33334a';
+  ctx.font = '16px "Helvetica Neue", Arial';
+  ctx.textAlign = 'right';
+  ctx.fillText('myirodori.com', W-PAD, H-48);
+}
+
+// ==============================
+// 2. 問いかけカード
+// ==============================
+
+const questions = [
+  { ja:'今日は\nどんな色でしたか？', en:'What color\nwas your day?', color:'#ff9ff3' },
+  { ja:'青い日も、\n赤い日も。', en:'Blue days, red days.\nAll of them matter.', color:'#74b9ff' },
+  { ja:'言葉にならない気持ちを\n色で残す。', en:'When words fall short,\npick a color.', color:'#a29bfe' },
+  { ja:'365日、\n365色。', en:'365 days.\n365 colors.', color:'#fdcb6e' },
+];
+
+function drawQuestion(canvas, q) {
+  const W=1080, H=1080;
+  const ctx = setupCanvas(canvas, W, H);
+
+  // 色ベースの背景
+  const rgb = hexToRgb(q.color);
+  const dark = `rgb(${Math.round(rgb[0]*0.15)},${Math.round(rgb[1]*0.15)},${Math.round(rgb[2]*0.15)})`;
+  const mid = `rgb(${Math.round(rgb[0]*0.3)},${Math.round(rgb[1]*0.3)},${Math.round(rgb[2]*0.3)})`;
+  const bg = ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0, dark);
+  bg.addColorStop(1, mid);
+  ctx.fillStyle = bg;
+  ctx.fillRect(0,0,W,H);
+
+  // アクセントサークル
+  ctx.beginPath();
+  ctx.arc(W*0.8, H*0.2, 180, 0, Math.PI*2);
+  ctx.fillStyle = q.color + '22';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(W*0.2, H*0.8, 120, 0, Math.PI*2);
+  ctx.fillStyle = q.color + '18';
+  ctx.fill();
+
+  // 日本語テキスト
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 68px "Hiragino Kaku Gothic ProN", "Helvetica Neue", Arial';
+  ctx.textAlign = 'center';
+  const jaLines = q.ja.split('\n');
+  jaLines.forEach((line, i) => {
+    ctx.fillText(line, W/2, H/2 - 60 + i*80);
+  });
+
+  // 英語テキスト
+  ctx.fillStyle = q.color + 'bb';
+  ctx.font = '22px "Helvetica Neue", Arial';
+  const enLines = q.en.split('\n');
+  enLines.forEach((line, i) => {
+    ctx.fillText(line, W/2, H/2 + 100 + i*32);
+  });
+
+  // ブランド
+  ctx.fillStyle = '#ffffff44';
+  ctx.font = 'bold 18px "Helvetica Neue", Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('irodori  ·  myirodori.com', W/2, H-48);
+}
+
+// ==============================
+// 3. 年間カラーカード
+// ==============================
+
+const personas = [
+  { name:'Yuki', seed:42, coverage:0.92,
+    monthColors:[['#c8d6e5','#dfe6e9'],['#b2c8d4','#d5e8f0'],['#ffd6e0','#ffb8c6'],['#ffc8dd','#ffafc7'],['#a8e6cf','#b5ead7'],['#96ceb4','#88d8b0'],['#87ceeb','#74b9ff'],['#81ecec','#55efc4'],['#fdcb6e','#ffd180'],['#ffb347','#ffa94d'],['#e8a598','#e17055'],['#c8d6e5','#a8c4d4']], variation:30 },
+  { name:'Ren', seed:77, coverage:0.72,
+    monthColors:[['#2d3436','#636e72'],['#4a4a7a','#6c5ce7'],['#2c3e50','#34495e'],['#1a1a2e','#16213e'],['#0f3460','#533483'],['#2d3436','#4a4a7a'],['#0d7377','#14a085'],['#1e3799','#0c2461'],['#6c5ce7','#a29bfe'],['#8e44ad','#9b59b6'],['#2c3e50','#34495e'],['#1a1a2e','#2d3436']],
+    brightDays:['#f9ca24','#ff6b6b','#00cec9','#fd79a8','#00b894'], brightChance:0.08, variation:20 },
+  { name:'Haru', seed:13, coverage:0.85,
+    monthColors:[['#ff6b6b','#ee5a24'],['#ff9f43','#ffa94d'],['#ff6b6b','#fd79a8'],['#e84393','#fd79a8'],['#ff6b6b','#ff7675'],['#e55039','#c0392b'],['#d63031','#e17055'],['#ff6b6b','#fdcb6e'],['#f0932b','#e55039'],['#e17055','#d63031'],['#c0392b','#922b21'],['#ee5a24','#e55039']], variation:50 },
+  { name:'Sora', seed:99, coverage:0.88,
+    monthColors:[['#74b9ff','#a8d8f0'],['#81ecec','#74b9ff'],['#55efc4','#00b894'],['#00b894','#00cec9'],['#a8e6cf','#55efc4'],['#27ae60','#2ecc71'],['#0984e3','#74b9ff'],['#00cec9','#0984e3'],['#27ae60','#6ab04c'],['#00b894','#55efc4'],['#636e72','#778ca3'],['#74b9ff','#a8d8f0']],
+    grayDays:['#b2bec3','#636e72','#778ca3','#dfe6e9'], grayChance:0.15, variation:25 },
+  { name:'Mio', seed:55, coverage:0.78,
+    allColors:['#ff6b6b','#ffa94d','#ffe066','#74b9ff','#a29bfe','#55efc4','#fd79a8','#6c5ce7','#00b894','#fdcb6e','#e17055','#81ecec','#b2bec3','#e84393','#2d3436','#ffeaa7','#00cec9','#fab1a0','#778ca3','#f9ca24','#e55039','#c8d6e5','#8e44ad','#27ae60','#f0932b','#badc58','#535c68','#ff9ff3','#54a0ff'] },
+];
+
+function generateEntries(persona, year) {
+  const rand = seededRand(persona.seed);
+  const entries = {};
+  for (let m=1; m<=12; m++) {
+    const days = getDays(year, m);
+    for (let d=1; d<=days; d++) {
+      if (rand() > persona.coverage) continue;
+      const dateStr = year+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      let color;
+      if (persona.allColors) {
+        color = persona.allColors[Math.floor(rand()*persona.allColors.length)];
+      } else {
+        const [colA, colB] = persona.monthColors[m-1];
+        if (persona.brightDays && rand()<persona.brightChance) {
+          color = persona.brightDays[Math.floor(rand()*persona.brightDays.length)];
+        } else if (persona.grayDays && rand()<persona.grayChance) {
+          color = persona.grayDays[Math.floor(rand()*persona.grayDays.length)];
+        } else {
+          color = lerpColor(colA, colB, rand());
+          const [r,g,b] = hexToRgb(color);
+          const v = persona.variation;
+          const nr=Math.min(255,Math.max(0,r+Math.round((rand()-0.5)*v*2)));
+          const ng=Math.min(255,Math.max(0,g+Math.round((rand()-0.5)*v*2)));
+          const nb=Math.min(255,Math.max(0,b+Math.round((rand()-0.5)*v*2)));
+          color = `#${nr.toString(16).padStart(2,'0')}${ng.toString(16).padStart(2,'0')}${nb.toString(16).padStart(2,'0')}`;
+        }
+      }
+      entries[dateStr] = { color };
+    }
+  }
+  return entries;
+}
+
+function drawYearCard(canvas, persona, year) {
+  const W=1080, H=1080;
+  const ctx = setupCanvas(canvas, W, H);
+  const entries = generateEntries(persona, year);
+
+  darkBg(ctx, W, H);
+
+  const PAD=72; let y=PAD;
+
+  ctx.fillStyle='#fff'; ctx.font='bold 48px "Helvetica Neue",Arial'; ctx.textAlign='left';
+  ctx.fillText('irodori', PAD, y+44);
+  ctx.fillStyle='#666680'; ctx.font='20px "Helvetica Neue",Arial';
+  ctx.fillText(`${year}  ${persona.name}'s year in color`, PAD, y+76);
+  y+=108;
+
+  ctx.strokeStyle='#2a2a40'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke();
+  y+=24;
+
+  const LABEL_W=50, dotsAreaW=(W-PAD*2)-LABEL_W-12;
+  const SLOT=Math.floor(dotsAreaW/31), DOT=SLOT-5, ROW_H=DOT+11;
+
+  for(let m=1;m<=12;m++){
+    const daysInMonth=getDays(year,m), mx=PAD+LABEL_W+12;
+    ctx.fillStyle='#44445a'; ctx.font='14px "Helvetica Neue",Arial'; ctx.textAlign='right';
+    ctx.fillText(m+'月', PAD+LABEL_W, y+DOT-4);
+    for(let d=1;d<=daysInMonth;d++){
+      const ds=year+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      const dx=mx+(d-1)*SLOT, r=DOT/2;
+      ctx.beginPath(); ctx.arc(dx+r,y+r,r,0,Math.PI*2);
+      ctx.fillStyle=entries[ds]?entries[ds].color:'#1e1e30'; ctx.fill();
+    }
+    y+=ROW_H;
+  }
+
+  y+=16;
+  ctx.strokeStyle='#2a2a40'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke();
+  y+=24;
+
+  const recorded=Object.keys(entries).length;
+  const colorCount={};
+  Object.values(entries).forEach(e=>{colorCount[e.color]=(colorCount[e.color]||0)+1;});
+  const topColors=Object.entries(colorCount).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([c])=>c);
+
+  ctx.fillStyle='#44445a'; ctx.font='15px "Helvetica Neue",Arial'; ctx.textAlign='left';
+  ctx.fillText(`${recorded} days recorded`, PAD, y+18);
+  const cr=12;
+  topColors.forEach((color,i)=>{
+    ctx.beginPath(); ctx.arc(PAD+i*(cr*2+6)+cr, y+46, cr, 0, Math.PI*2);
+    ctx.fillStyle=color; ctx.fill();
+  });
+
+  ctx.fillStyle='#2a2a40'; ctx.font='bold 15px "Helvetica Neue",Arial'; ctx.textAlign='right';
+  ctx.fillText('myirodori.com', W-PAD, H-PAD+16);
+}
+
+// ==============================
+// 4. 月間カード
+// ==============================
+
+const monthPalettes = [
+  {a:'#a8d8f0',b:'#c8d6e5'},{a:'#b2c8d4',b:'#c9e4f0'},{a:'#ffd6e0',b:'#a8c8d8'},
+  {a:'#ffb8c6',b:'#a8e6cf'},{a:'#a8e6cf',b:'#f9ca24'},{a:'#74b9ff',b:'#55efc4'},
+  {a:'#ffa94d',b:'#ff6b6b'},{a:'#ff6b6b',b:'#fdcb6e'},{a:'#fdcb6e',b:'#e17055'},
+  {a:'#e17055',b:'#d63031'},{a:'#c0392b',b:'#8e44ad'},{a:'#6c5ce7',b:'#a8d8f0'},
+];
+
+const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function generateMonthEntries(year, month, seed) {
+  const rand = seededRand(seed);
+  const pal = monthPalettes[month-1];
+  const days = getDays(year, month);
+  const entries = {};
+  for (let d=1; d<=days; d++) {
+    if (rand() > 0.85) continue;
+    const dateStr = year+'-'+String(month).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const progress = (d-1)/(days-1);
+    let color = lerpColor(pal.a, pal.b, progress);
+    const [r,g,b] = hexToRgb(color);
+    const v=40;
+    const nr=Math.min(255,Math.max(0,r+Math.round((rand()-0.5)*v*2)));
+    const ng=Math.min(255,Math.max(0,g+Math.round((rand()-0.5)*v*2)));
+    const nb=Math.min(255,Math.max(0,b+Math.round((rand()-0.5)*v*2)));
+    entries[dateStr] = { color:`#${nr.toString(16).padStart(2,'0')}${ng.toString(16).padStart(2,'0')}${nb.toString(16).padStart(2,'0')}` };
+  }
+  return entries;
+}
+
+function drawMonthCard(canvas, year, month) {
+  const W=1080, H=1080;
+  const ctx = setupCanvas(canvas, W, H);
+  const entries = generateMonthEntries(year, month, month*37+year);
+
+  darkBg(ctx, W, H);
+
+  const PAD=80; let y=PAD;
+
+  ctx.fillStyle='#fff'; ctx.font='bold 52px "Helvetica Neue",Arial'; ctx.textAlign='left';
+  ctx.fillText('irodori', PAD, y+48);
+  y+=70;
+
+  ctx.fillStyle='#666680'; ctx.font='26px "Helvetica Neue",Arial';
+  ctx.fillText(monthNames[month-1]+' '+year, PAD, y);
+  y+=50;
+
+  ctx.strokeStyle='#2a2a40'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke();
+  y+=40;
+
+  // カレンダーグリッド
+  const firstDow = new Date(year, month-1, 1).getDay();
+  const days = getDays(year, month);
+  const cols = 7;
+  const gridW = W - PAD*2;
+  const cellSize = Math.floor(gridW / cols);
+  const DOT = cellSize - 12;
+
+  // 曜日ヘッダー
+  const dowLabels = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  ctx.fillStyle='#44445a'; ctx.font='14px "Helvetica Neue",Arial'; ctx.textAlign='center';
+  dowLabels.forEach((d,i)=>{
+    ctx.fillText(d, PAD+i*cellSize+cellSize/2, y+18);
+  });
+  y+=36;
+
+  let col = firstDow;
+  let row = 0;
+  for (let d=1; d<=days; d++) {
+    const dateStr = year+'-'+String(month).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const entry = entries[dateStr];
+    const cx = PAD + col*cellSize + cellSize/2;
+    const cy = y + row*(cellSize) + DOT/2;
+    const r = DOT/2;
+
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
+    ctx.fillStyle = entry ? entry.color : '#1e1e30';
+    ctx.fill();
+
+    // 日付
+    ctx.fillStyle = entry ? 'rgba(255,255,255,0.7)' : '#333350';
+    ctx.font = '12px "Helvetica Neue",Arial'; ctx.textAlign='center';
+    ctx.fillText(d, cx, cy+4);
+
+    col++;
+    if (col===7){ col=0; row++; }
+  }
+
+  y += (row+1)*cellSize + 20;
+
+  ctx.strokeStyle='#2a2a40'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke();
+  y+=28;
+
+  const recorded=Object.keys(entries).length;
+  ctx.fillStyle='#44445a'; ctx.font='16px "Helvetica Neue",Arial'; ctx.textAlign='left';
+  ctx.fillText(`${recorded} / ${days} days recorded`, PAD, y+20);
+
+  ctx.fillStyle='#2a2a40'; ctx.font='bold 16px "Helvetica Neue",Arial'; ctx.textAlign='right';
+  ctx.fillText('myirodori.com', W-PAD, H-48);
+}
+
+// ==============================
+// レンダリング実行
+// ==============================
+
+const year = 2025;
+
+// 1. アプリ紹介カード
+document.getElementById('introCards').appendChild(
+  makeCard('メインビジュアル', '1080 × 1080', drawIntroMain, 'irodori-intro-main.png')
+);
+document.getElementById('introCards').appendChild(
+  makeCard('機能紹介', '1080 × 1080', drawIntroFeature, 'irodori-intro-features.png')
+);
+
+// 2. 問いかけカード
+questions.forEach((q, i) => {
+  document.getElementById('questionCards').appendChild(
+    makeCard(q.ja.replace('\n',''), '1080 × 1080', (c)=>drawQuestion(c,q), `irodori-question-${i+1}.png`)
+  );
+});
+
+// 3. 年間カラーカード
+personas.forEach(p => {
+  document.getElementById('yearCards').appendChild(
+    makeCard(`${p.name}の2025年`, '1080 × 1080', (c)=>drawYearCard(c,p,year), `irodori-year-${p.name.toLowerCase()}.png`)
+  );
+});
+
+// 4. 月間カード（全12ヶ月）
+for (let m=1; m<=12; m++) {
+  document.getElementById('monthCards').appendChild(
+    makeCard(monthNames[m-1], '1080 × 1080', (c)=>drawMonthCard(c,year,m), `irodori-month-${String(m).padStart(2,'0')}.png`)
+  );
+}
+
+// ==============================
+// 5. 季節カード
+// ==============================
+const seasons = [
+  { name:'春 Spring', months:[3,4,5],
+    colors:['#ffb8c6','#ffd6e0','#a8e6cf','#f9ca24','#fd79a8','#badc58','#fab1a0','#a29bfe'],
+    bg:['#1a0a0e','#2a1020'], accent:'#ffb8c6',
+    ja:'桜が咲いて、\n世界が色づく。', en:'The world blooms\nin a thousand colors.' },
+  { name:'夏 Summer', months:[6,7,8],
+    colors:['#ff6b6b','#ffa94d','#ffe066','#00cec9','#0984e3','#fdcb6e','#ff7675','#55efc4'],
+    bg:['#0a0a1a','#1a1a0a'], accent:'#ffa94d',
+    ja:'眩しくて、\n熱くて、忘れられない夏。', en:'Bright, hot,\nunforgettable.' },
+  { name:'秋 Autumn', months:[9,10,11],
+    colors:['#e17055','#d63031','#f0932b','#fdcb6e','#c0392b','#e55039','#8e44ad','#b8860b'],
+    bg:['#1a0800','#0a0810'], accent:'#e17055',
+    ja:'深まるほど、\n色が増える。', en:'The deeper the season,\nthe richer the color.' },
+  { name:'冬 Winter', months:[12,1,2],
+    colors:['#74b9ff','#a8d8f0','#dfe6e9','#b2bec3','#6c5ce7','#c8d6e5','#81ecec','#2d3436'],
+    bg:['#050510','#0a0a1a'], accent:'#a8d8f0',
+    ja:'静かな空気の中に、\nそっと色がある。', en:'In the quiet cold,\ncolor still finds you.' },
+];
+
+function drawSeasonCard(canvas, season) {
+  const W=1080, H=1080;
+  const ctx = setupCanvas(canvas, W, H);
+  const bg = ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0, season.bg[0]); bg.addColorStop(1, season.bg[1]);
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  // カラードットを散らす
+  const rand = seededRand(seasons.indexOf(season)*17+3);
+  for (let i=0; i<60; i++) {
+    const x = rand()*W, y = rand()*H;
+    const r = 8+rand()*40;
+    const c = season.colors[Math.floor(rand()*season.colors.length)];
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle = c + Math.floor(20+rand()*60).toString(16).padStart(2,'0');
+    ctx.fill();
+  }
+
+  // テキストエリア（中央下寄り）
+  const cy = H*0.62;
+  ctx.fillStyle='#fff';
+  ctx.font='bold 56px "Hiragino Kaku Gothic ProN","Helvetica Neue",Arial';
+  ctx.textAlign='center';
+  season.ja.split('\n').forEach((l,i)=>ctx.fillText(l, W/2, cy+i*70));
+
+  ctx.fillStyle = season.accent+'cc';
+  ctx.font='20px "Helvetica Neue",Arial';
+  season.en.split('\n').forEach((l,i)=>ctx.fillText(l, W/2, cy+130+i*28));
+
+  // 上部 季節名
+  ctx.fillStyle=season.accent;
+  ctx.font='bold 18px "Helvetica Neue",Arial';
+  ctx.textAlign='left';
+  ctx.fillText(season.name, 72, 72);
+  ctx.fillStyle='#33334a'; ctx.textAlign='right';
+  ctx.fillText('irodori', W-72, H-48);
+}
+
+seasons.forEach((s,i) => {
+  document.getElementById('seasonCards').appendChild(
+    makeCard(s.name, '1080 × 1080', (c)=>drawSeasonCard(c,s), `irodori-season-${i+1}.png`)
+  );
+});
+
+// ==============================
+// 6. 今日の1色テンプレート
+// ==============================
+const sampleColors = [
+  { color:'#ff9ff3', name:'桜もち色', nameEn:'sakura mochi pink', date:'Mar 31' },
+  { color:'#74b9ff', name:'冬晴れブルー', nameEn:'winter clear blue', date:'Jan 4' },
+  { color:'#fdcb6e', name:'バター色', nameEn:'butter yellow', date:'Jun 12' },
+  { color:'#e17055', name:'テラコッタ', nameEn:'terracotta', date:'Oct 13' },
+];
+
+function drawColorCard(canvas, sample) {
+  const W=1080, H=1080;
+  const ctx = setupCanvas(canvas, W, H);
+  const [r,g,b] = hexToRgb(sample.color);
+  const dark = `rgb(${Math.round(r*.1)},${Math.round(g*.1)},${Math.round(b*.1)})`;
+  const bg = ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0, dark); bg.addColorStop(1, `rgb(${Math.round(r*.2)},${Math.round(g*.2)},${Math.round(b*.2)})`);
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  // 大きな色サークル
+  ctx.beginPath(); ctx.arc(W/2, H/2-40, 260, 0, Math.PI*2);
+  ctx.fillStyle=sample.color; ctx.fill();
+
+  // 内側リング
+  ctx.beginPath(); ctx.arc(W/2, H/2-40, 268, 0, Math.PI*2);
+  ctx.strokeStyle=sample.color+'66'; ctx.lineWidth=3; ctx.stroke();
+
+  // 色名
+  ctx.fillStyle='#fff';
+  ctx.font='bold 48px "Hiragino Kaku Gothic ProN","Helvetica Neue",Arial';
+  ctx.textAlign='center';
+  ctx.fillText(sample.name, W/2, H/2+280);
+  ctx.fillStyle=sample.color+'bb';
+  ctx.font='22px "Helvetica Neue",Arial';
+  ctx.fillText(sample.nameEn, W/2, H/2+320);
+
+  // 日付
+  ctx.fillStyle='#ffffff33';
+  ctx.font='18px "Helvetica Neue",Arial';
+  ctx.fillText(sample.date, W/2, H/2+370);
+
+  ctx.fillStyle='#33334a'; ctx.font='bold 16px "Helvetica Neue",Arial';
+  ctx.fillText('irodori  ·  myirodori.com', W/2, H-48);
+}
+
+sampleColors.forEach((s,i) => {
+  document.getElementById('colorCards').appendChild(
+    makeCard(s.name, '1080 × 1080', (c)=>drawColorCard(c,s), `irodori-color-${i+1}.png`)
+  );
+});
+
+// ==============================
+// 7. Before / After カード
+// ==============================
+function drawBeforeAfter(canvas) {
+  const W=1080, H=1080;
+  const ctx = setupCanvas(canvas, W, H);
+  darkBg(ctx, W, H);
+
+  const PAD=60, half=W/2-PAD/2;
+
+  // Before（左）
+  ctx.fillStyle='#111120'; ctx.beginPath();
+  ctx.roundRect(PAD, PAD+60, half, H-PAD*2-60, 16); ctx.fill();
+  ctx.fillStyle='#33334a'; ctx.font='bold 18px "Helvetica Neue",Arial'; ctx.textAlign='center';
+  ctx.fillText('before', PAD+half/2, PAD+90);
+
+  const SLOT=Math.floor((half-40)/31), DOT=SLOT-4, ROW_H=DOT+8;
+  let by=PAD+120;
+  for(let m=1;m<=12;m++){
+    const days=getDays(2025,m), mx=PAD+20;
+    for(let d=1;d<=days;d++){
+      const dx=mx+(d-1)*SLOT, r=DOT/2;
+      ctx.beginPath(); ctx.arc(dx+r, by+r, r, 0, Math.PI*2);
+      ctx.fillStyle='#1e1e30'; ctx.fill();
+    }
+    by+=ROW_H;
+  }
+
+  ctx.fillStyle='#22224a'; ctx.font='bold 20px "Helvetica Neue",Arial'; ctx.textAlign='center';
+  ctx.fillText('記録なし', PAD+half/2, H-PAD-20);
+
+  // 矢印
+  ctx.fillStyle='#444460'; ctx.font='bold 32px Arial'; ctx.textAlign='center';
+  ctx.fillText('→', W/2, H/2+10);
+
+  // After（右）
+  const rx=W/2+PAD/2;
+  ctx.fillStyle='#111120'; ctx.beginPath();
+  ctx.roundRect(rx, PAD+60, half, H-PAD*2-60, 16); ctx.fill();
+  ctx.fillStyle='#55efc4'; ctx.font='bold 18px "Helvetica Neue",Arial';
+  ctx.fillText('after 365 days', rx+half/2, PAD+90);
+
+  const rand=seededRand(42);
+  const pal=[['#c8d6e5','#dfe6e9'],['#b2c8d4','#c9e4f0'],['#ffd6e0','#ffb8c6'],['#ffb8c6','#a8e6cf'],['#a8e6cf','#f9ca24'],['#74b9ff','#55efc4'],['#ffa94d','#ff6b6b'],['#ff6b6b','#fdcb6e'],['#fdcb6e','#e17055'],['#e17055','#d63031'],['#c0392b','#8e44ad'],['#6c5ce7','#a8d8f0']];
+  let ay=PAD+120;
+  for(let m=1;m<=12;m++){
+    const days=getDays(2025,m), mx=rx+20;
+    for(let d=1;d<=days;d++){
+      if(rand()>0.85){continue;}
+      const color=lerpColor(pal[m-1][0],pal[m-1][1],(d-1)/(days-1));
+      const [cr,cg,cb]=hexToRgb(color);
+      const v=35;
+      const nr=Math.min(255,Math.max(0,cr+Math.round((rand()-.5)*v*2)));
+      const ng=Math.min(255,Math.max(0,cg+Math.round((rand()-.5)*v*2)));
+      const nb=Math.min(255,Math.max(0,cb+Math.round((rand()-.5)*v*2)));
+      const dx=mx+(d-1)*SLOT, r=DOT/2;
+      ctx.beginPath(); ctx.arc(dx+r, ay+r, r, 0, Math.PI*2);
+      ctx.fillStyle=`#${nr.toString(16).padStart(2,'0')}${ng.toString(16).padStart(2,'0')}${nb.toString(16).padStart(2,'0')}`;
+      ctx.fill();
+    }
+    ay+=ROW_H;
+  }
+
+  ctx.fillStyle='#55efc4'; ctx.font='bold 20px "Helvetica Neue",Arial';
+  ctx.fillText('298日分の色', rx+half/2, H-PAD-20);
+
+  // タイトル
+  ctx.fillStyle='#fff'; ctx.font='bold 26px "Helvetica Neue",Arial'; ctx.textAlign='center';
+  ctx.fillText('毎日1色を記録すると、こうなる。', W/2, PAD+36);
+
+  ctx.fillStyle='#33334a'; ctx.font='bold 15px "Helvetica Neue",Arial';
+  ctx.fillText('irodori  ·  myirodori.com', W/2, H-18);
+}
+
+document.getElementById('beforeAfterCards').appendChild(
+  makeCard('Before / After', '1080 × 1080', drawBeforeAfter, 'irodori-before-after.png')
+);
+
+// ==============================
+// 8. 統計カード
+// ==============================
+const statsData = [
+  { topColor:'#74b9ff', topName:'冬晴れブルー', pct:18, colors:['#74b9ff','#a8d8f0','#ff9ff3','#fdcb6e','#e17055'], days:298, mood:'穏やかで思慮深い1年でした。' },
+  { topColor:'#ff6b6b', topName:'情熱レッド',   pct:22, colors:['#ff6b6b','#ffa94d','#fdcb6e','#e17055','#fd79a8'], days:312, mood:'エネルギッシュで熱い1年でした。' },
+];
+
+function drawStatsCard(canvas, data) {
+  const W=1080, H=1080;
+  const ctx = setupCanvas(canvas, W, H);
+  darkBg(ctx, W, H);
+
+  const PAD=72; let y=PAD;
+
+  ctx.fillStyle='#fff'; ctx.font='bold 44px "Helvetica Neue",Arial'; ctx.textAlign='left';
+  ctx.fillText('irodori', PAD, y+40);
+  ctx.fillStyle='#55556a'; ctx.font='18px "Helvetica Neue",Arial';
+  ctx.fillText('2025年 あなたの色レポート', PAD, y+70);
+  y+=100;
+
+  ctx.strokeStyle='#2a2a40'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke();
+  y+=40;
+
+  // 大きな主役の色
+  ctx.beginPath(); ctx.arc(PAD+80, y+80, 80, 0, Math.PI*2);
+  ctx.fillStyle=data.topColor; ctx.fill();
+  ctx.fillStyle='#fff'; ctx.font='bold 28px "Helvetica Neue",Arial'; ctx.textAlign='left';
+  ctx.fillText('今年一番多かった色', PAD+180, y+60);
+  ctx.fillStyle=data.topColor; ctx.font='bold 36px "Helvetica Neue",Arial';
+  ctx.fillText(data.topName, PAD+180, y+105);
+  ctx.fillStyle='#666680'; ctx.font='20px "Helvetica Neue",Arial';
+  ctx.fillText(`全体の ${data.pct}%`, PAD+180, y+140);
+  y+=200;
+
+  // カラーバー
+  ctx.fillStyle='#55556a'; ctx.font='16px "Helvetica Neue",Arial';
+  ctx.fillText('よく使った色 TOP 5', PAD, y);
+  y+=30;
+  data.colors.forEach((c,i)=>{
+    const bw=(W-PAD*2)*(0.7-i*0.12);
+    ctx.beginPath(); ctx.roundRect(PAD, y, bw, 28, 6);
+    ctx.fillStyle=c; ctx.fill();
+    y+=40;
+  });
+
+  y+=20;
+  ctx.strokeStyle='#2a2a40'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke();
+  y+=30;
+
+  ctx.fillStyle='#fff'; ctx.font='bold 22px "Hiragino Kaku Gothic ProN","Helvetica Neue",Arial';
+  ctx.fillText(`「${data.mood}」`, PAD, y+28);
+  y+=60;
+  ctx.fillStyle='#55556a'; ctx.font='18px "Helvetica Neue",Arial';
+  ctx.fillText(`記録した日数: ${data.days}日`, PAD, y);
+
+  ctx.fillStyle='#33334a'; ctx.font='bold 15px "Helvetica Neue",Arial'; ctx.textAlign='right';
+  ctx.fillText('myirodori.com', W-PAD, H-48);
+}
+
+statsData.forEach((d,i) => {
+  document.getElementById('statsCards').appendChild(
+    makeCard(`統計カード ${i+1}`, '1080 × 1080', (c)=>drawStatsCard(c,d), `irodori-stats-${i+1}.png`)
+  );
+});
+
+// ==============================
+// 9. ストーリーズ縦型カード
+// ==============================
+function drawStoryCard(canvas, persona) {
+  const W=1080, H=1920;
+  const ctx = setupCanvas(canvas, W, H);
+  const entries = generateEntries(persona, 2025);
+  darkBg(ctx, W, H);
+
+  const PAD=80; let y=PAD;
+
+  ctx.fillStyle='#fff'; ctx.font='bold 60px "Helvetica Neue",Arial'; ctx.textAlign='left';
+  ctx.fillText('irodori', PAD, y+56);
+  ctx.fillStyle='#666680'; ctx.font='24px "Helvetica Neue",Arial';
+  ctx.fillText(`2025  ${persona.name}'s year in color`, PAD, y+96);
+  y+=140;
+
+  ctx.strokeStyle='#2a2a40'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke();
+  y+=32;
+
+  const LABEL_W=60, dotsAreaW=(W-PAD*2)-LABEL_W-16;
+  const SLOT=Math.floor(dotsAreaW/31), DOT=SLOT-5, ROW_H=DOT+16;
+
+  for(let m=1;m<=12;m++){
+    const daysInMonth=getDays(2025,m), mx=PAD+LABEL_W+16;
+    ctx.fillStyle='#44445a'; ctx.font='16px "Helvetica Neue",Arial'; ctx.textAlign='right';
+    ctx.fillText(m+'月', PAD+LABEL_W, y+DOT-4);
+    for(let d=1;d<=daysInMonth;d++){
+      const ds=`2025-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dx=mx+(d-1)*SLOT, r=DOT/2;
+      ctx.beginPath(); ctx.arc(dx+r,y+r,r,0,Math.PI*2);
+      ctx.fillStyle=entries[ds]?entries[ds].color:'#1e1e30'; ctx.fill();
+    }
+    y+=ROW_H;
+  }
+
+  y+=30;
+  ctx.strokeStyle='#2a2a40'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke();
+  y+=40;
+
+  const recorded=Object.keys(entries).length;
+  const colorCount={};
+  Object.values(entries).forEach(e=>{colorCount[e.color]=(colorCount[e.color]||0)+1;});
+  const topColors=Object.entries(colorCount).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([c])=>c);
+
+  ctx.fillStyle='#44445a'; ctx.font='18px "Helvetica Neue",Arial'; ctx.textAlign='left';
+  ctx.fillText(`${recorded} days recorded`, PAD, y+20);
+  const cr=16;
+  topColors.forEach((color,i)=>{
+    ctx.beginPath(); ctx.arc(PAD+i*(cr*2+8)+cr, y+56, cr, 0, Math.PI*2);
+    ctx.fillStyle=color; ctx.fill();
+  });
+
+  y+=120;
+  ctx.fillStyle='#fff'; ctx.font='bold 36px "Helvetica Neue",Arial'; ctx.textAlign='center';
+  ctx.fillText('今日は何色でしたか？', W/2, y);
+  ctx.fillStyle='#55556a'; ctx.font='20px "Helvetica Neue",Arial';
+  ctx.fillText('Color your days at myirodori.com', W/2, y+40);
+
+  ctx.fillStyle='#33334a'; ctx.font='bold 18px "Helvetica Neue",Arial'; ctx.textAlign='center';
+  ctx.fillText('#irodori  #coloroftheday  #色日記', W/2, H-60);
+}
+
+personas.slice(0,3).forEach((p,i)=>{
+  document.getElementById('storyCards').appendChild(
+    makeCard(`ストーリーズ — ${p.name}`, '1080 × 1920', (c)=>drawStoryCard(c,p), `irodori-story-${p.name.toLowerCase()}.png`)
+  );
+});
+
+// ==============================
+// 10. ハッシュタグ紹介カード
+// ==============================
+function drawHashtagCard(canvas) {
+  const W=1080, H=1080;
+  const ctx = setupCanvas(canvas, W, H);
+  darkBg(ctx, W, H);
+
+  const PAD=80;
+  const allColors=['#ff6b6b','#ffa94d','#ffe066','#74b9ff','#a29bfe','#55efc4','#fd79a8','#6c5ce7','#00b894','#fdcb6e','#e17055','#81ecec','#f9ca24','#e84393','#00cec9','#fab1a0'];
+  const rand=seededRand(7);
+  for(let i=0;i<40;i++){
+    ctx.beginPath(); ctx.arc(rand()*W, rand()*H, 4+rand()*20, 0, Math.PI*2);
+    ctx.fillStyle=allColors[Math.floor(rand()*allColors.length)]+'33'; ctx.fill();
+  }
+
+  let y = 160;
+  ctx.fillStyle='#fff'; ctx.font='bold 52px "Helvetica Neue",Arial'; ctx.textAlign='center';
+  ctx.fillText('参加方法', W/2, y); y+=80;
+
+  const steps = [
+    { tag:'#irodori', desc:'投稿にこのタグをつける', color:'#74b9ff' },
+    { tag:'#coloroftheday', desc:'英語圏に届ける', color:'#55efc4' },
+    { tag:'#色日記', desc:'日本語圏に届ける', color:'#fd79a8' },
+    { tag:'#my365colors', desc:'1年の振り返りシェアに', color:'#fdcb6e' },
+  ];
+
+  steps.forEach(s=>{
+    ctx.beginPath(); ctx.roundRect(PAD, y, W-PAD*2, 100, 12);
+    ctx.fillStyle='#151520'; ctx.fill();
+
+    ctx.fillStyle=s.color; ctx.font='bold 28px "Helvetica Neue",Arial'; ctx.textAlign='left';
+    ctx.fillText(s.tag, PAD+28, y+42);
+    ctx.fillStyle='#888899'; ctx.font='18px "Helvetica Neue",Arial';
+    ctx.fillText(s.desc, PAD+28, y+72);
+    y+=120;
+  });
+
+  ctx.fillStyle='#fff'; ctx.font='bold 22px "Helvetica Neue",Arial'; ctx.textAlign='center';
+  ctx.fillText('myirodori.com', W/2, H-60);
+}
+
+document.getElementById('hashtagCards').appendChild(
+  makeCard('ハッシュタグ紹介', '1080 × 1080', drawHashtagCard, 'irodori-hashtag.png')
+);
+
+// ==============================
+// 11. 多言語紹介カード
+// ==============================
+function drawLangCard(canvas) {
+  const W=1080, H=1080;
+  const ctx = setupCanvas(canvas, W, H);
+  darkBg(ctx, W, H);
+
+  const PAD=72; let y=PAD;
+
+  ctx.fillStyle='#fff'; ctx.font='bold 48px "Helvetica Neue",Arial'; ctx.textAlign='center';
+  ctx.fillText('irodori', W/2, y+44);
+  ctx.fillStyle='#55556a'; ctx.font='20px "Helvetica Neue",Arial';
+  ctx.fillText('Available in 3 languages', W/2, y+76);
+  y+=120;
+
+  ctx.strokeStyle='#2a2a40'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke();
+  y+=50;
+
+  const langs = [
+    { flag:'🇯🇵', lang:'日本語', label:'今日の色', sub:'今日はどんな1日でしたか', color:'#ff9ff3' },
+    { flag:'🇺🇸', lang:'English', label:"Today's color", sub:'How was your day?', color:'#74b9ff' },
+    { flag:'🇰🇷', lang:'한국어', label:'오늘의 색', sub:'오늘 하루는 어땠나요?', color:'#55efc4' },
+  ];
+
+  langs.forEach(l=>{
+    const bx=PAD, bw=W-PAD*2;
+    ctx.beginPath(); ctx.roundRect(bx, y, bw, 160, 14);
+    ctx.fillStyle='#131320'; ctx.fill();
+
+    // アクセントライン
+    ctx.beginPath(); ctx.roundRect(bx, y, 6, 160, [14,0,0,14]);
+    ctx.fillStyle=l.color; ctx.fill();
+
+    ctx.font='32px Arial'; ctx.textAlign='left';
+    ctx.fillText(l.flag, bx+28, y+56);
+
+    ctx.fillStyle='#888899'; ctx.font='16px "Helvetica Neue",Arial';
+    ctx.fillText(l.lang, bx+80, y+44);
+    ctx.fillStyle='#fff'; ctx.font='bold 30px "Hiragino Kaku Gothic ProN","Apple SD Gothic Neo","Helvetica Neue",Arial';
+    ctx.fillText(l.label, bx+80, y+88);
+    ctx.fillStyle='#55556a'; ctx.font='18px "Hiragino Kaku Gothic ProN","Apple SD Gothic Neo","Helvetica Neue",Arial';
+    ctx.fillText(l.sub, bx+80, y+122);
+    y+=180;
+  });
+
+  ctx.fillStyle='#fff'; ctx.font='bold 22px "Helvetica Neue",Arial'; ctx.textAlign='center';
+  ctx.fillText('myirodori.com', W/2, H-60);
+}
+
+document.getElementById('langCards').appendChild(
+  makeCard('多言語紹介カード', '1080 × 1080', drawLangCard, 'irodori-multilang.png')
+);
+</script>
+</body>
+</html>
