@@ -233,6 +233,21 @@
     .btn-primary { flex: 1; padding: 11px; border-radius: 10px; border: none; cursor: pointer; font-size: 0.9rem; background: var(--accent); color: #fff; transition: opacity 0.2s; }
     .btn-primary:hover { opacity: 0.85; }
 
+    .share-type-tabs { display:flex; gap:6px; margin-bottom:14px; }
+    .share-type-tab {
+      flex:1; padding:8px; border-radius:10px; border:1.5px solid var(--border);
+      background:var(--surface); color:var(--text2); font-size:0.85rem; font-weight:600;
+      cursor:pointer; transition:all 0.15s;
+    }
+    .share-type-tab.active { background:var(--accent); color:var(--bg); border-color:var(--accent); }
+    .share-nav-btn {
+      width:34px; height:34px; border-radius:8px; border:1.5px solid var(--border);
+      background:var(--surface); color:var(--text2); font-size:1rem; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    }
+    .share-period-row { display:flex; align-items:center; gap:8px; width:100%; }
+    .share-period-label { font-size:0.9rem; color:var(--text); font-weight:500; flex:1; text-align:center; }
+
     /* =====================
        設定パネル（フルスクリーン）
     ===================== */
@@ -496,6 +511,12 @@
 <div class="overlay" id="shareOverlay">
   <div class="modal-card share-modal">
     <h3 id="shareModalTitle"></h3>
+    <div class="share-type-tabs" id="shareTypeTabs">
+      <button class="share-type-tab active" data-type="week"></button>
+      <button class="share-type-tab" data-type="month"></button>
+      <button class="share-type-tab" data-type="season"></button>
+      <button class="share-type-tab" data-type="year"></button>
+    </div>
     <div class="share-year-select" id="yearChips"></div>
     <canvas id="shareCanvas"></canvas>
     <div class="modal-actions" style="margin-top:16px">
@@ -584,6 +605,7 @@
       settingsResetBtn:'削除する', settingsResetConfirm:'本当にすべてのデータを削除しますか？',
       settingsName:'名前', settingsNamePH:'あなたの名前（例：Yuki）',
       obNameLabel:'あなたの名前は？', obNamePH:'名前を入力してください', obNameSkip:'スキップ',
+      cardTypeWeek:'週', cardTypeMonth:'月', cardTypeSeason:'季節', cardTypeYear:'年',
     },
     en: {
       todayColor:"Today's color", pickColor:'Pick a color',
@@ -606,6 +628,7 @@
       settingsResetBtn:'Delete', settingsResetConfirm:'Are you sure you want to delete all data?',
       settingsName:'Name', settingsNamePH:'Your name (e.g. Yuki)',
       obNameLabel:"What's your name?", obNamePH:'Enter your name', obNameSkip:'Skip',
+      cardTypeWeek:'Week', cardTypeMonth:'Month', cardTypeSeason:'Season', cardTypeYear:'Year',
     },
     ko: {
       todayColor:'오늘의 색', pickColor:'색 선택',
@@ -626,6 +649,7 @@
       settingsResetBtn:'삭제', settingsResetConfirm:'모든 데이터를 삭제하시겠습니까?',
       settingsName:'이름', settingsNamePH:'이름을 입력하세요 (예: Yuki)',
       obNameLabel:'이름이 무엇인가요?', obNamePH:'이름을 입력하세요', obNameSkip:'건너뛰기',
+      cardTypeWeek:'주', cardTypeMonth:'월', cardTypeSeason:'계절', cardTypeYear:'연',
     },
   };
 
@@ -671,6 +695,7 @@
     document.getElementById('shareModalTitle').textContent = t('shareTitle');
     document.getElementById('shareDownload').textContent = t('download');
     document.getElementById('shareClose').textContent = t('close');
+    updateShareTypeTabs();
     document.getElementById('detailClose').textContent = t('close');
     document.getElementById('detailDelete').textContent = t('deleteBtn');
     const themeModalTitle = document.getElementById('themeModalTitle'); if (themeModalTitle) themeModalTitle.textContent = t('themeModal');
@@ -927,45 +952,244 @@
   });
 
   // ---- シェアカード ----
-  let shareYear = new Date().getFullYear();
-  document.getElementById('shareBtn').addEventListener('click', () => {
-    const entries=loadEntries();
-    const years=[...new Set(Object.keys(entries).map(d=>d.slice(0,4)))].sort((a,b)=>b-a);
-    if(years.length===0){ alert(t('noEntries')); return; }
-    const chips=document.getElementById('yearChips'); chips.innerHTML='';
-    if(!years.includes(String(shareYear))) shareYear=Number(years[0]);
-    years.forEach(y=>{
-      const chip=document.createElement('button'); chip.className='year-chip'+(Number(y)===shareYear?' active':'');
-      chip.textContent=t('yearChip',y);
-      chip.addEventListener('click',()=>{ shareYear=Number(y); chips.querySelectorAll('.year-chip').forEach(c=>c.classList.remove('active')); chip.classList.add('active'); drawShareCard(shareYear); });
-      chips.appendChild(chip);
+  let shareCardType = 'week';
+  let shareYear     = new Date().getFullYear();
+  // 週カード用: 月曜始まりの週の月曜日をISO文字列で持つ
+  let shareWeekMonday = (function(){
+    const d = new Date(); const dow = d.getDay(); const diff = (dow + 6) % 7;
+    d.setDate(d.getDate() - diff); return isoDate(d);
+  })();
+  // 月カード用
+  let shareMonth = new Date().getMonth() + 1;
+  let shareMonthYear = new Date().getFullYear();
+  // 季節カード用
+  const SEASONS = ['spring','summer','autumn','winter'];
+  const SEASON_JA = { spring:'春', summer:'夏', autumn:'秋', winter:'冬' };
+  const SEASON_EN = { spring:'Spring', summer:'Summer', autumn:'Autumn', winter:'Winter' };
+  const SEASON_KO = { spring:'봄', summer:'여름', autumn:'가을', winter:'겨울' };
+  const SEASON_MONTHS = { spring:[3,4,5], summer:[6,7,8], autumn:[9,10,11], winter:[12,1,2] };
+  // 現在の季節を自動決定
+  let shareSeason = (function(){
+    const m=new Date().getMonth()+1;
+    if(m>=3&&m<=5) return 'spring';
+    if(m>=6&&m<=8) return 'summer';
+    if(m>=9&&m<=11) return 'autumn';
+    return 'winter';
+  })();
+  let shareSeasonYear = new Date().getFullYear();
+
+  function isoDate(d) {
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+
+  function seasonLabel(season) {
+    if(currentLang==='en') return SEASON_EN[season];
+    if(currentLang==='ko') return SEASON_KO[season];
+    return SEASON_JA[season];
+  }
+  function seasonFilename(season) { return season; }
+
+  // タブラベルを更新
+  function updateShareTypeTabs() {
+    document.querySelectorAll('.share-type-tab').forEach(btn => {
+      const type = btn.dataset.type;
+      const keys = { week:'cardTypeWeek', month:'cardTypeMonth', season:'cardTypeSeason', year:'cardTypeYear' };
+      btn.textContent = t(keys[type]);
+      btn.classList.toggle('active', type === shareCardType);
     });
+  }
+
+  // 期間セレクター（yearChips）を描画
+  function renderSharePeriodSelector() {
+    const chips = document.getElementById('yearChips');
+    chips.innerHTML = '';
+
+    if (shareCardType === 'year') {
+      // 既存の年chip
+      const entries = loadEntries();
+      const years = [...new Set(Object.keys(entries).map(d=>d.slice(0,4)))].sort((a,b)=>b-a);
+      if (!years.includes(String(shareYear))) shareYear = Number(years[0] || new Date().getFullYear());
+      years.forEach(y => {
+        const chip = document.createElement('button');
+        chip.className = 'year-chip' + (Number(y)===shareYear?' active':'');
+        chip.textContent = t('yearChip', y);
+        chip.addEventListener('click', () => {
+          shareYear = Number(y);
+          chips.querySelectorAll('.year-chip').forEach(c=>c.classList.remove('active'));
+          chip.classList.add('active');
+          drawCurrentCard();
+        });
+        chips.appendChild(chip);
+      });
+
+    } else if (shareCardType === 'week') {
+      // ← [日付範囲] →
+      const row = document.createElement('div'); row.className = 'share-period-row';
+      const prev = document.createElement('button'); prev.className = 'share-nav-btn'; prev.textContent = '←';
+      const next = document.createElement('button'); next.className = 'share-nav-btn'; next.textContent = '→';
+      const label = document.createElement('span'); label.className = 'share-period-label';
+      const updateWeekLabel = () => {
+        const mon = new Date(shareWeekMonday);
+        const sun = new Date(mon); sun.setDate(sun.getDate()+6);
+        const fmt = (d) => {
+          if(currentLang==='en') return (d.getMonth()+1)+'/'+d.getDate();
+          if(currentLang==='ko') return (d.getMonth()+1)+'월 '+d.getDate()+'일';
+          return (d.getMonth()+1)+'月'+d.getDate()+'日';
+        };
+        if(currentLang==='en') label.textContent = `${mon.getFullYear()} ${fmt(mon)} – ${fmt(sun)}`;
+        else if(currentLang==='ko') label.textContent = `${mon.getFullYear()}년 ${fmt(mon)}〜${fmt(sun)}`;
+        else label.textContent = `${mon.getFullYear()}年 ${fmt(mon)}〜${fmt(sun)}`;
+      };
+      prev.addEventListener('click', () => {
+        const d = new Date(shareWeekMonday); d.setDate(d.getDate()-7); shareWeekMonday=isoDate(d);
+        updateWeekLabel(); drawCurrentCard();
+      });
+      next.addEventListener('click', () => {
+        const d = new Date(shareWeekMonday); d.setDate(d.getDate()+7); shareWeekMonday=isoDate(d);
+        updateWeekLabel(); drawCurrentCard();
+      });
+      updateWeekLabel();
+      row.appendChild(prev); row.appendChild(label); row.appendChild(next);
+      chips.appendChild(row);
+
+    } else if (shareCardType === 'month') {
+      // ← [年月] →
+      const row = document.createElement('div'); row.className = 'share-period-row';
+      const prev = document.createElement('button'); prev.className = 'share-nav-btn'; prev.textContent = '←';
+      const next = document.createElement('button'); next.className = 'share-nav-btn'; next.textContent = '→';
+      const label = document.createElement('span'); label.className = 'share-period-label';
+      const updateMonthLabel = () => { label.textContent = t('monthFull', shareMonthYear, shareMonth); };
+      prev.addEventListener('click', () => {
+        shareMonth--; if(shareMonth<1){shareMonth=12; shareMonthYear--;}
+        updateMonthLabel(); drawCurrentCard();
+      });
+      next.addEventListener('click', () => {
+        shareMonth++; if(shareMonth>12){shareMonth=1; shareMonthYear++;}
+        updateMonthLabel(); drawCurrentCard();
+      });
+      updateMonthLabel();
+      row.appendChild(prev); row.appendChild(label); row.appendChild(next);
+      chips.appendChild(row);
+
+    } else if (shareCardType === 'season') {
+      // 季節chip + 年ナビ
+      const row = document.createElement('div'); row.className = 'share-period-row';
+      const prev = document.createElement('button'); prev.className = 'share-nav-btn'; prev.textContent = '←';
+      const next = document.createElement('button'); next.className = 'share-nav-btn'; next.textContent = '→';
+      const yearLabel = document.createElement('span'); yearLabel.className = 'share-period-label';
+      const updateYearLabel = () => { yearLabel.textContent = currentLang==='ja'?`${shareSeasonYear}年`:currentLang==='ko'?`${shareSeasonYear}년`:String(shareSeasonYear); };
+      prev.addEventListener('click', () => { shareSeasonYear--; updateYearLabel(); drawCurrentCard(); renderSeasonChips(); });
+      next.addEventListener('click', () => { shareSeasonYear++; updateYearLabel(); drawCurrentCard(); renderSeasonChips(); });
+      updateYearLabel();
+
+      const seasonChipsDiv = document.createElement('div');
+      seasonChipsDiv.style.cssText = 'display:flex; gap:6px; flex-wrap:wrap; width:100%; margin-top:8px;';
+      const renderSeasonChips = () => {
+        seasonChipsDiv.innerHTML = '';
+        SEASONS.forEach(s => {
+          const chip = document.createElement('button');
+          chip.className = 'year-chip' + (s===shareSeason?' active':'');
+          chip.textContent = seasonLabel(s);
+          chip.addEventListener('click', () => { shareSeason=s; renderSeasonChips(); drawCurrentCard(); });
+          seasonChipsDiv.appendChild(chip);
+        });
+      };
+      renderSeasonChips();
+
+      row.appendChild(prev); row.appendChild(yearLabel); row.appendChild(next);
+      chips.appendChild(row);
+      chips.appendChild(seasonChipsDiv);
+    }
+  }
+
+  function drawCurrentCard() {
+    if (shareCardType==='year')   drawYearCard(shareYear);
+    else if (shareCardType==='week')   drawWeekCard(shareWeekMonday);
+    else if (shareCardType==='month')  drawMonthCard(shareMonthYear, shareMonth);
+    else if (shareCardType==='season') drawSeasonCard(shareSeasonYear, shareSeason);
+  }
+
+  // タブクリック
+  document.getElementById('shareTypeTabs').addEventListener('click', e => {
+    const btn = e.target.closest('.share-type-tab');
+    if (!btn) return;
+    shareCardType = btn.dataset.type;
+    updateShareTypeTabs();
+    renderSharePeriodSelector();
+    drawCurrentCard();
+  });
+
+  document.getElementById('shareBtn').addEventListener('click', () => {
+    const entries = loadEntries();
+    if (Object.keys(entries).length===0) { alert(t('noEntries')); return; }
+    updateShareTypeTabs();
+    renderSharePeriodSelector();
     document.getElementById('shareOverlay').classList.add('open');
-    drawShareCard(shareYear);
+    drawCurrentCard();
   });
+
   document.getElementById('shareClose').addEventListener('click', () => document.getElementById('shareOverlay').classList.remove('open'));
-  document.getElementById('shareOverlay').addEventListener('click', e => { if(e.target===document.getElementById('shareOverlay')) document.getElementById('shareOverlay').classList.remove('open'); });
+  document.getElementById('shareOverlay').addEventListener('click', e => {
+    if(e.target===document.getElementById('shareOverlay')) document.getElementById('shareOverlay').classList.remove('open');
+  });
   document.getElementById('shareDownload').addEventListener('click', () => {
-    const a=document.createElement('a'); a.download=`irodori-${shareYear}.png`; a.href=document.getElementById('shareCanvas').toDataURL('image/png'); a.click();
+    const a = document.createElement('a');
+    if (shareCardType==='week') {
+      a.download = `irodori-week-${shareWeekMonday}.png`;
+    } else if (shareCardType==='month') {
+      a.download = `irodori-month-${shareMonthYear}-${String(shareMonth).padStart(2,'0')}.png`;
+    } else if (shareCardType==='season') {
+      a.download = `irodori-${seasonFilename(shareSeason)}-${shareSeasonYear}.png`;
+    } else {
+      a.download = `irodori-${shareYear}.png`;
+    }
+    a.href = document.getElementById('shareCanvas').toDataURL('image/png');
+    a.click();
   });
 
-  function drawShareCard(year) {
-    const entries=loadEntries();
-    const canvas=document.getElementById('shareCanvas');
+  // ---- カード共通ユーティリティ ----
+  function initCanvas() {
+    const canvas = document.getElementById('shareCanvas');
     const DPR=2, W=1080, H=1080;
-    canvas.width=W*DPR; canvas.height=H*DPR; canvas.style.width='100%'; canvas.style.aspectRatio='1/1';
-    const ctx=canvas.getContext('2d'); ctx.scale(DPR,DPR);
-
-    // テーマカラーを取得
-    const tc = THEME_CANVAS[currentTheme] || THEME_CANVAS.black;
-
-    const bg=ctx.createLinearGradient(0,0,W,H); bg.addColorStop(0,tc.bg1); bg.addColorStop(1,tc.bg2);
+    canvas.width=W*DPR; canvas.height=H*DPR;
+    canvas.style.width='100%'; canvas.style.aspectRatio='1/1';
+    const ctx = canvas.getContext('2d'); ctx.scale(DPR,DPR);
+    return { ctx, W, H, DPR };
+  }
+  function drawBg(ctx, W, H, tc) {
+    const bg = ctx.createLinearGradient(0,0,W,H);
+    bg.addColorStop(0,tc.bg1); bg.addColorStop(1,tc.bg2);
     ctx.fillStyle=bg; ctx.roundRect(0,0,W,H,32); ctx.fill();
+  }
+  function drawFooter(ctx, W, H, PAD, tc, filteredEntries) {
+    const colorCount={};
+    filteredEntries.forEach(([,e])=>{ colorCount[e.color]=(colorCount[e.color]||0)+1; });
+    const topColors = Object.entries(colorCount).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([c])=>c);
+    const fy = H - PAD - 60;
+    ctx.strokeStyle=tc.divider; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(PAD,fy); ctx.lineTo(W-PAD,fy); ctx.stroke();
+    ctx.textAlign='left'; ctx.fillStyle=tc.text2; ctx.font='16px "Helvetica Neue",Arial';
+    ctx.fillText(t('cardDays', filteredEntries.length), PAD, fy+24);
+    const circleR=14;
+    topColors.forEach((color,i)=>{
+      ctx.beginPath(); ctx.arc(PAD+i*(circleR*2+8)+circleR, fy+50, circleR, 0, Math.PI*2);
+      ctx.fillStyle=color; ctx.fill();
+    });
+    ctx.textAlign='right'; ctx.fillStyle=tc.brand; ctx.font='bold 16px "Helvetica Neue",Arial';
+    ctx.fillText('irodori', W-PAD, H-PAD+16);
+  }
+
+  // ---- 年カード ----
+  function drawYearCard(year) {
+    const entries = loadEntries();
+    const { ctx, W, H } = initCanvas();
+    const tc = THEME_CANVAS[currentTheme] || THEME_CANVAS.black;
+    drawBg(ctx, W, H, tc);
     const PAD=72; let y=PAD;
     ctx.textAlign='left'; ctx.fillStyle=tc.text; ctx.font='bold 58px "Helvetica Neue",Arial';
-    ctx.fillText('irodori',PAD,y+54);
+    ctx.fillText('irodori', PAD, y+54);
     ctx.fillStyle=tc.text2; ctx.font='22px "Helvetica Neue",Arial';
-    ctx.fillText(t('cardSubtitle',year),PAD,y+88);
+    ctx.fillText(t('cardSubtitle',year), PAD, y+88);
     y+=120;
     ctx.strokeStyle=tc.divider; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke(); y+=28;
     const LABEL_W=52, dotsAreaW=(W-PAD*2)-LABEL_W-12;
@@ -973,7 +1197,7 @@
     for(let m=1;m<=12;m++){
       const daysInMonth=new Date(year,m,0).getDate(), mx=PAD+LABEL_W+12;
       ctx.fillStyle=tc.monthLabel; ctx.font='15px "Helvetica Neue",Arial'; ctx.textAlign='right';
-      ctx.fillText(t('monthLabel',m),PAD+LABEL_W,y+DOT-5);
+      ctx.fillText(t('monthLabel',m), PAD+LABEL_W, y+DOT-5);
       for(let d=1;d<=daysInMonth;d++){
         const ds=year+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
         const entry=entries[ds], dx=mx+(d-1)*SLOT, r=DOT/2;
@@ -982,17 +1206,179 @@
       }
       y+=ROW_H;
     }
-    y+=20;
-    ctx.strokeStyle=tc.divider; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke(); y+=28;
     const yearEntries=Object.entries(entries).filter(([k])=>k.startsWith(String(year)));
-    const colorCount={}; yearEntries.forEach(([,e])=>{colorCount[e.color]=(colorCount[e.color]||0)+1;});
-    const topColors=Object.entries(colorCount).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([c])=>c);
-    ctx.textAlign='left'; ctx.fillStyle=tc.text2; ctx.font='16px "Helvetica Neue",Arial';
-    ctx.fillText(t('cardDays',yearEntries.length),PAD,y+20);
-    const circleR=14;
-    topColors.forEach((color,i)=>{ ctx.beginPath(); ctx.arc(PAD+i*(circleR*2+8)+circleR,y+50,circleR,0,Math.PI*2); ctx.fillStyle=color; ctx.fill(); });
-    ctx.textAlign='right'; ctx.fillStyle=tc.brand; ctx.font='bold 16px "Helvetica Neue",Arial';
-    ctx.fillText('irodori',W-PAD,H-PAD+16);
+    drawFooter(ctx, W, H, PAD, tc, yearEntries);
+  }
+
+  // ---- 週カード ----
+  function drawWeekCard(mondayISO) {
+    const entries = loadEntries();
+    const { ctx, W, H } = initCanvas();
+    const tc = THEME_CANVAS[currentTheme] || THEME_CANVAS.black;
+    drawBg(ctx, W, H, tc);
+    const PAD=72;
+    const mon = new Date(mondayISO);
+    const sun = new Date(mon); sun.setDate(sun.getDate()+6);
+    const fmtRange = () => {
+      const fy=mon.getFullYear();
+      const fmtD=(d)=>{
+        if(currentLang==='en') return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]+' '+d.getDate();
+        if(currentLang==='ko') return (d.getMonth()+1)+'월 '+d.getDate()+'일';
+        return (d.getMonth()+1)+'月'+d.getDate()+'日';
+      };
+      if(currentLang==='en') return `${fy}  ${fmtD(mon)} – ${fmtD(sun)}`;
+      if(currentLang==='ko') return `${fy}년  ${fmtD(mon)}〜${fmtD(sun)}`;
+      return `${fy}年  ${fmtD(mon)}〜${fmtD(sun)}`;
+    };
+    // ヘッダー
+    let y=PAD;
+    ctx.textAlign='left'; ctx.fillStyle=tc.text; ctx.font='bold 58px "Helvetica Neue",Arial';
+    ctx.fillText('irodori', PAD, y+54);
+    ctx.fillStyle=tc.text2; ctx.font='22px "Helvetica Neue",Arial';
+    ctx.fillText(fmtRange(), PAD, y+88);
+    y+=120;
+    ctx.strokeStyle=tc.divider; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke(); y+=28;
+
+    const DOW_LABELS = {
+      ja:['月','火','水','木','金','土','日'],
+      en:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      ko:['월','화','수','목','금','토','일'],
+    };
+    const labels = DOW_LABELS[currentLang] || DOW_LABELS.ja;
+    const colW = Math.floor((W - PAD*2) / 7);
+    const circleR = Math.min(Math.floor(colW*0.38), 80);
+    const cx0 = PAD + colW/2;
+
+    // 曜日ラベル
+    ctx.fillStyle=tc.text2; ctx.font='20px "Helvetica Neue",Arial'; ctx.textAlign='center';
+    labels.forEach((lbl,i)=>{ ctx.fillText(lbl, cx0+i*colW, y+24); });
+    y+=50;
+
+    // 大きな円（月〜日）
+    const weekEntries = [];
+    for(let i=0;i<7;i++){
+      const d = new Date(mon); d.setDate(d.getDate()+i);
+      const ds = isoDate(d);
+      const entry = entries[ds];
+      const cx = cx0 + i*colW;
+      const cy = y + circleR;
+      ctx.beginPath(); ctx.arc(cx, cy, circleR, 0, Math.PI*2);
+      ctx.fillStyle = entry ? entry.color : tc.empty; ctx.fill();
+      // 日付数字
+      ctx.fillStyle = entry ? 'rgba(255,255,255,0.85)' : tc.text2;
+      ctx.font = `bold ${Math.round(circleR*0.7)}px "Helvetica Neue",Arial`;
+      ctx.textAlign = 'center';
+      ctx.fillText(String(d.getDate()), cx, cy+Math.round(circleR*0.25));
+      if(entry) weekEntries.push([ds, entry]);
+    }
+
+    drawFooter(ctx, W, H, PAD, tc, weekEntries);
+  }
+
+  // ---- 月カード ----
+  function drawMonthCard(year, month) {
+    const entries = loadEntries();
+    const { ctx, W, H } = initCanvas();
+    const tc = THEME_CANVAS[currentTheme] || THEME_CANVAS.black;
+    drawBg(ctx, W, H, tc);
+    const PAD=60;
+    // ヘッダー
+    let y=PAD;
+    ctx.textAlign='left'; ctx.fillStyle=tc.text; ctx.font='bold 58px "Helvetica Neue",Arial';
+    ctx.fillText('irodori', PAD, y+54);
+    ctx.fillStyle=tc.text2; ctx.font='22px "Helvetica Neue",Arial';
+    ctx.fillText(t('monthFull', year, month), PAD, y+88);
+    y+=120;
+    ctx.strokeStyle=tc.divider; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke(); y+=24;
+
+    const DOW_HEADERS = {
+      ja:['日','月','火','水','木','金','土'],
+      en:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+      ko:['일','월','화','수','목','금','토'],
+    };
+    const headers = DOW_HEADERS[currentLang] || DOW_HEADERS.ja;
+    const SLOT = Math.floor((W-PAD*2)/7);
+    const firstDow = new Date(year, month-1, 1).getDay(); // 0=日
+    const lastDay  = new Date(year, month, 0).getDate();
+    const totalCells = firstDow + lastDay;
+    const numRows = Math.ceil(totalCells/7);
+    const footerH = 120;
+    const gridH = H - y - PAD - footerH;
+    const rowH = Math.floor(gridH / numRows);
+    const R = Math.min(54, Math.floor(rowH * 0.44));
+
+    // 曜日ヘッダー
+    ctx.fillStyle=tc.text2; ctx.font='18px "Helvetica Neue",Arial'; ctx.textAlign='center';
+    headers.forEach((h,i)=>{ ctx.fillText(h, PAD+SLOT*i+SLOT/2, y+22); });
+    y+=38;
+
+    // カレンダーグリッド
+    const monthEntries = [];
+    for(let cell=0;cell<numRows*7;cell++){
+      const dayNum = cell - firstDow + 1;
+      const col = cell%7, row = Math.floor(cell/7);
+      const cx = PAD + col*SLOT + SLOT/2;
+      const cy = y + row*rowH + rowH/2;
+      if(dayNum>=1 && dayNum<=lastDay){
+        const ds = year+'-'+String(month).padStart(2,'0')+'-'+String(dayNum).padStart(2,'0');
+        const entry = entries[ds];
+        ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2);
+        ctx.fillStyle = entry ? entry.color : tc.empty; ctx.fill();
+        ctx.fillStyle = entry ? 'rgba(255,255,255,0.85)' : tc.text2;
+        ctx.font = `${Math.round(R*0.62)}px "Helvetica Neue",Arial`; ctx.textAlign='center';
+        ctx.fillText(String(dayNum), cx, cy+Math.round(R*0.22));
+        if(entry) monthEntries.push([ds, entry]);
+      }
+    }
+
+    drawFooter(ctx, W, H, PAD, tc, monthEntries);
+  }
+
+  // ---- 季節カード ----
+  function drawSeasonCard(year, season) {
+    const entries = loadEntries();
+    const { ctx, W, H } = initCanvas();
+    const tc = THEME_CANVAS[currentTheme] || THEME_CANVAS.black;
+    drawBg(ctx, W, H, tc);
+    const PAD=72;
+    // ヘッダーラベル
+    const seasonName = seasonLabel(season);
+    let headTitle;
+    if(currentLang==='en') headTitle = `${year}  ${seasonName}`;
+    else if(currentLang==='ko') headTitle = `${year}년  ${seasonName}`;
+    else headTitle = `${year}年  ${seasonName}`;
+
+    let y=PAD;
+    ctx.textAlign='left'; ctx.fillStyle=tc.text; ctx.font='bold 58px "Helvetica Neue",Arial';
+    ctx.fillText('irodori', PAD, y+54);
+    ctx.fillStyle=tc.text2; ctx.font='22px "Helvetica Neue",Arial';
+    ctx.fillText(headTitle, PAD, y+88);
+    y+=120;
+    ctx.strokeStyle=tc.divider; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke(); y+=28;
+
+    // 3ヶ月分のドットストリップ（年カードと同じスタイル）
+    const months = SEASON_MONTHS[season]; // [m1,m2,m3]
+    const LABEL_W=52, dotsAreaW=(W-PAD*2)-LABEL_W-12;
+    const SLOT=Math.floor(dotsAreaW/31), DOT=SLOT-4, ROW_H=DOT+14;
+    const seasonEntries = [];
+    months.forEach(m => {
+      // 冬の1,2月はyear+1
+      const yr = (season==='winter' && (m===1||m===2)) ? year+1 : year;
+      const daysInMonth = new Date(yr,m,0).getDate();
+      const mx = PAD+LABEL_W+12;
+      ctx.fillStyle=tc.monthLabel; ctx.font='15px "Helvetica Neue",Arial'; ctx.textAlign='right';
+      ctx.fillText(t('monthLabel',m), PAD+LABEL_W, y+DOT-5);
+      for(let d=1;d<=daysInMonth;d++){
+        const ds = yr+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+        const entry=entries[ds], dx=mx+(d-1)*SLOT, r=DOT/2;
+        ctx.beginPath(); ctx.arc(dx+r,y+r,r,0,Math.PI*2);
+        ctx.fillStyle=entry?entry.color:tc.empty; ctx.fill();
+        if(entry) seasonEntries.push([ds,entry]);
+      }
+      y+=ROW_H;
+    });
+
+    drawFooter(ctx, W, H, PAD, tc, seasonEntries);
   }
 
   // ---- 起動 ----
