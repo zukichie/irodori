@@ -1367,38 +1367,48 @@
     y+=120;
     ctx.strokeStyle=tc.divider; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke(); y+=28;
 
-    const footerY = H - PAD - 60;
-    const availH  = footerY - y;
-    const SECTION_H = Math.floor(availH / 3);   // 3ヶ月分を等分
+    const footerY  = H - PAD - 60;
+    const availH   = footerY - y;          // ≈728px
+    const SECTION_H = Math.floor(availH / 3);
 
-    // ドットサイズ（横方向で上限）
-    const LABEL_W=52, dotsAreaW=(W-PAD*2)-LABEL_W-12;
-    const SLOT=Math.floor(dotsAreaW/31), DOT=SLOT-2;
+    // 各月を3行に折り返す → ドットを最大化
+    const ROWS      = 3;
+    const LABEL_H   = 40;
+    const DOT_GAP   = 8;
+    const MAX_COL   = 11;                  // ceil(31/3) = 11列
+    const SLOT      = Math.floor((W - PAD*2) / MAX_COL);
+    const DOT_H_MAX = SLOT - 4;
+    const dotAreaH  = SECTION_H - LABEL_H - (ROWS-1)*DOT_GAP;
+    const DOT_V_MAX = Math.floor(dotAreaH / ROWS);
+    const DOT       = Math.min(DOT_H_MAX, DOT_V_MAX);  // ≈58px → R≈29px
 
     const months = SEASON_MONTHS[season];
     const seasonEntries = [];
+
     months.forEach((m, idx) => {
       const yr = (season==='winter' && (m===1||m===2)) ? year+1 : year;
-      const daysInMonth = new Date(yr,m,0).getDate();
-      const sectionTop = y + idx * SECTION_H;
+      const daysInMonth = new Date(yr, m, 0).getDate();
+      const sectionTop  = y + idx * SECTION_H;
 
-      // 月名（大きく）
-      const monthNameY = sectionTop + Math.floor(SECTION_H * 0.32);
-      ctx.fillStyle=tc.text; ctx.font='bold 36px "Helvetica Neue",Arial'; ctx.textAlign='left';
-      ctx.fillText(t('monthFull', yr, m), PAD, monthNameY);
+      // 月名
+      ctx.fillStyle=tc.text; ctx.font='bold 26px "Helvetica Neue",Arial'; ctx.textAlign='left';
+      ctx.fillText(t('monthFull', yr, m), PAD, sectionTop + 28);
 
-      // ドット行（月名の下に配置）
-      const dotY = sectionTop + Math.floor(SECTION_H * 0.60);
-      const mx   = PAD+LABEL_W+12;
-      for(let d=1;d<=daysInMonth;d++){
-        const ds = yr+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-        const entry=entries[ds], r=DOT/2;
-        ctx.beginPath(); ctx.arc(mx+(d-1)*SLOT+r, dotY+r, r, 0, Math.PI*2);
-        ctx.fillStyle=entry?entry.color:tc.empty; ctx.fill();
-        if(entry) seasonEntries.push([ds,entry]);
+      // ドット：月の日数を均等に3行へ
+      const perRow = Math.ceil(daysInMonth / ROWS);
+      for(let d=1; d<=daysInMonth; d++){
+        const col   = (d-1) % perRow;
+        const row   = Math.floor((d-1) / perRow);
+        const dotCX = PAD + col*SLOT + DOT/2;
+        const dotCY = sectionTop + LABEL_H + row*(DOT+DOT_GAP) + DOT/2;
+        const ds    = yr+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+        const entry = entries[ds];
+        ctx.beginPath(); ctx.arc(dotCX, dotCY, DOT/2, 0, Math.PI*2);
+        ctx.fillStyle = entry ? entry.color : tc.empty; ctx.fill();
+        if(entry) seasonEntries.push([ds, entry]);
       }
 
-      // セクション区切り線（最後以外）
+      // セクション区切り線
       if(idx < 2){
         const lineY = sectionTop + SECTION_H - 1;
         ctx.strokeStyle=tc.divider; ctx.lineWidth=0.5;
