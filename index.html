@@ -1148,24 +1148,25 @@
   });
 
   // ---- カード共通ユーティリティ ----
-  function initCanvas() {
+  function initCanvas(H=1080) {
     const canvas = document.getElementById('shareCanvas');
-    const DPR=2, W=1080, H=1080;
+    const DPR=2, W=1080;
     canvas.width=W*DPR; canvas.height=H*DPR;
-    canvas.style.width='100%'; canvas.style.aspectRatio='1/1';
+    canvas.style.width='100%'; canvas.style.aspectRatio=`${W}/${H}`;
     const ctx = canvas.getContext('2d'); ctx.scale(DPR,DPR);
-    return { ctx, W, H, DPR };
+    return { ctx, W, H };
   }
   function drawBg(ctx, W, H, tc) {
     const bg = ctx.createLinearGradient(0,0,W,H);
     bg.addColorStop(0,tc.bg1); bg.addColorStop(1,tc.bg2);
     ctx.fillStyle=bg; ctx.roundRect(0,0,W,H,32); ctx.fill();
   }
-  function drawFooter(ctx, W, H, PAD, tc, filteredEntries) {
+  // fy: フッター仕切り線のY座標（省略時は H-PAD-60）
+  function drawFooter(ctx, W, H, PAD, tc, filteredEntries, fy) {
+    if(fy===undefined) fy = H - PAD - 60;
     const colorCount={};
     filteredEntries.forEach(([,e])=>{ colorCount[e.color]=(colorCount[e.color]||0)+1; });
     const topColors = Object.entries(colorCount).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([c])=>c);
-    const fy = H - PAD - 60;
     ctx.strokeStyle=tc.divider; ctx.lineWidth=1;
     ctx.beginPath(); ctx.moveTo(PAD,fy); ctx.lineTo(W-PAD,fy); ctx.stroke();
     ctx.textAlign='left'; ctx.fillStyle=tc.text2; ctx.font='16px "Helvetica Neue",Arial';
@@ -1182,7 +1183,7 @@
   // ---- 年カード ----
   function drawYearCard(year) {
     const entries = loadEntries();
-    const { ctx, W, H } = initCanvas();
+    const { ctx, W, H } = initCanvas(1080);
     const tc = THEME_CANVAS[currentTheme] || THEME_CANVAS.black;
     drawBg(ctx, W, H, tc);
     const PAD=72; let y=PAD;
@@ -1192,31 +1193,40 @@
     ctx.fillText(t('cardSubtitle',year), PAD, y+88);
     y+=120;
     ctx.strokeStyle=tc.divider; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke(); y+=28;
+
+    const footerY = H - PAD - 60;
+    const availH = footerY - y;
+    const ROWS = 12;
+    const ROW_H = Math.floor(availH / ROWS);
     const LABEL_W=52, dotsAreaW=(W-PAD*2)-LABEL_W-12;
-    const SLOT=Math.floor(dotsAreaW/31), DOT=SLOT-4, ROW_H=DOT+10;
+    const SLOT=Math.floor(dotsAreaW/31), DOT=Math.min(SLOT-2, ROW_H-8);
+    const mx = PAD+LABEL_W+12;
+
+    const yearEntries = [];
     for(let m=1;m<=12;m++){
-      const daysInMonth=new Date(year,m,0).getDate(), mx=PAD+LABEL_W+12;
-      ctx.fillStyle=tc.monthLabel; ctx.font='15px "Helvetica Neue",Arial'; ctx.textAlign='right';
-      ctx.fillText(t('monthLabel',m), PAD+LABEL_W, y+DOT-5);
+      const daysInMonth=new Date(year,m,0).getDate();
+      const dotY = y + (m-1)*ROW_H + Math.floor((ROW_H-DOT)/2);
+      ctx.fillStyle=tc.monthLabel; ctx.font='14px "Helvetica Neue",Arial'; ctx.textAlign='right';
+      ctx.fillText(t('monthLabel',m), PAD+LABEL_W, dotY+DOT-3);
       for(let d=1;d<=daysInMonth;d++){
         const ds=year+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-        const entry=entries[ds], dx=mx+(d-1)*SLOT, r=DOT/2;
-        ctx.beginPath(); ctx.arc(dx+r,y+r,r,0,Math.PI*2);
+        const entry=entries[ds], r=DOT/2;
+        ctx.beginPath(); ctx.arc(mx+(d-1)*SLOT+r, dotY+r, r, 0, Math.PI*2);
         ctx.fillStyle=entry?entry.color:tc.empty; ctx.fill();
+        if(entry) yearEntries.push([ds,entry]);
       }
-      y+=ROW_H;
     }
-    const yearEntries=Object.entries(entries).filter(([k])=>k.startsWith(String(year)));
-    drawFooter(ctx, W, H, PAD, tc, yearEntries);
+    drawFooter(ctx, W, H, PAD, tc, yearEntries, footerY);
   }
 
-  // ---- 週カード ----
+  // ---- 週カード（横長 1080×620）----
   function drawWeekCard(mondayISO) {
     const entries = loadEntries();
-    const { ctx, W, H } = initCanvas();
+    const CARD_H = 620;
+    const { ctx, W, H } = initCanvas(CARD_H);
     const tc = THEME_CANVAS[currentTheme] || THEME_CANVAS.black;
     drawBg(ctx, W, H, tc);
-    const PAD=72;
+    const PAD=64;
     const mon = new Date(mondayISO);
     const sun = new Date(mon); sun.setDate(sun.getDate()+6);
     const fmtRange = () => {
@@ -1230,15 +1240,17 @@
       if(currentLang==='ko') return `${fy}년  ${fmtD(mon)}〜${fmtD(sun)}`;
       return `${fy}年  ${fmtD(mon)}〜${fmtD(sun)}`;
     };
-    // ヘッダー
+    // ヘッダー（コンパクト）
     let y=PAD;
-    ctx.textAlign='left'; ctx.fillStyle=tc.text; ctx.font='bold 58px "Helvetica Neue",Arial';
-    ctx.fillText('irodori', PAD, y+54);
-    ctx.fillStyle=tc.text2; ctx.font='22px "Helvetica Neue",Arial';
-    ctx.fillText(fmtRange(), PAD, y+88);
-    y+=120;
-    ctx.strokeStyle=tc.divider; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke(); y+=28;
+    ctx.textAlign='left'; ctx.fillStyle=tc.text; ctx.font='bold 52px "Helvetica Neue",Arial';
+    ctx.fillText('irodori', PAD, y+46);
+    ctx.fillStyle=tc.text2; ctx.font='20px "Helvetica Neue",Arial';
+    ctx.fillText(fmtRange(), PAD, y+74);
+    y+=100;
+    ctx.strokeStyle=tc.divider; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke(); y+=22;
 
+    const footerY = H - PAD - 50;
+    const availH = footerY - y;        // 曜日ラベル＋円が収まるエリア
     const DOW_LABELS = {
       ja:['月','火','水','木','金','土','日'],
       en:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
@@ -1246,43 +1258,47 @@
     };
     const labels = DOW_LABELS[currentLang] || DOW_LABELS.ja;
     const colW = Math.floor((W - PAD*2) / 7);
-    const circleR = Math.min(Math.floor(colW*0.38), 80);
-    const cx0 = PAD + colW/2;
+    const DOW_H = 34;
+    // 円サイズは横・縦両方の制約で決定
+    const R = Math.min(
+      Math.floor(colW * 0.43),
+      Math.floor((availH - DOW_H - 16) / 2)
+    );
+    // 曜日ラベル＋円ブロックを縦方向にセンタリング
+    const contentH = DOW_H + R * 2;
+    const startY = y + Math.floor((availH - contentH) / 2);
+    const cx0 = PAD + colW / 2;
 
     // 曜日ラベル
-    ctx.fillStyle=tc.text2; ctx.font='20px "Helvetica Neue",Arial'; ctx.textAlign='center';
-    labels.forEach((lbl,i)=>{ ctx.fillText(lbl, cx0+i*colW, y+24); });
-    y+=50;
+    ctx.fillStyle=tc.text2; ctx.font=`17px "Helvetica Neue",Arial`; ctx.textAlign='center';
+    labels.forEach((lbl,i) => ctx.fillText(lbl, cx0+i*colW, startY+22));
 
-    // 大きな円（月〜日）
+    // 円
     const weekEntries = [];
     for(let i=0;i<7;i++){
       const d = new Date(mon); d.setDate(d.getDate()+i);
       const ds = isoDate(d);
       const entry = entries[ds];
       const cx = cx0 + i*colW;
-      const cy = y + circleR;
-      ctx.beginPath(); ctx.arc(cx, cy, circleR, 0, Math.PI*2);
+      const cy = startY + DOW_H + R;
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2);
       ctx.fillStyle = entry ? entry.color : tc.empty; ctx.fill();
-      // 日付数字
       ctx.fillStyle = entry ? 'rgba(255,255,255,0.85)' : tc.text2;
-      ctx.font = `bold ${Math.round(circleR*0.7)}px "Helvetica Neue",Arial`;
+      ctx.font = `bold ${Math.round(R*0.62)}px "Helvetica Neue",Arial`;
       ctx.textAlign = 'center';
-      ctx.fillText(String(d.getDate()), cx, cy+Math.round(circleR*0.25));
+      ctx.fillText(String(d.getDate()), cx, cy + Math.round(R*0.22));
       if(entry) weekEntries.push([ds, entry]);
     }
-
-    drawFooter(ctx, W, H, PAD, tc, weekEntries);
+    drawFooter(ctx, W, H, PAD, tc, weekEntries, footerY);
   }
 
   // ---- 月カード ----
   function drawMonthCard(year, month) {
     const entries = loadEntries();
-    const { ctx, W, H } = initCanvas();
+    const { ctx, W, H } = initCanvas(1080);
     const tc = THEME_CANVAS[currentTheme] || THEME_CANVAS.black;
     drawBg(ctx, W, H, tc);
-    const PAD=60;
-    // ヘッダー
+    const PAD=64;
     let y=PAD;
     ctx.textAlign='left'; ctx.fillStyle=tc.text; ctx.font='bold 58px "Helvetica Neue",Arial';
     ctx.fillText('irodori', PAD, y+54);
@@ -1298,56 +1314,51 @@
     };
     const headers = DOW_HEADERS[currentLang] || DOW_HEADERS.ja;
     const SLOT = Math.floor((W-PAD*2)/7);
-    const firstDow = new Date(year, month-1, 1).getDay(); // 0=日
+    const firstDow = new Date(year, month-1, 1).getDay();
     const lastDay  = new Date(year, month, 0).getDate();
-    const totalCells = firstDow + lastDay;
-    const numRows = Math.ceil(totalCells/7);
-    const footerH = 120;
-    const gridH = H - y - PAD - footerH;
-    const rowH = Math.floor(gridH / numRows);
-    const R = Math.min(54, Math.floor(rowH * 0.44));
+    const numRows  = Math.ceil((firstDow + lastDay) / 7);
+    const footerY  = H - PAD - 60;
+    const DOW_H    = 36;
+    const gridH    = footerY - y - DOW_H;
+    const rowH     = Math.floor(gridH / numRows);
+    const R        = Math.min(Math.floor(SLOT * 0.42), Math.floor(rowH * 0.44));
 
     // 曜日ヘッダー
-    ctx.fillStyle=tc.text2; ctx.font='18px "Helvetica Neue",Arial'; ctx.textAlign='center';
-    headers.forEach((h,i)=>{ ctx.fillText(h, PAD+SLOT*i+SLOT/2, y+22); });
-    y+=38;
+    ctx.fillStyle=tc.text2; ctx.font='17px "Helvetica Neue",Arial'; ctx.textAlign='center';
+    headers.forEach((h,i) => ctx.fillText(h, PAD+SLOT*i+SLOT/2, y+24));
+    y += DOW_H;
 
     // カレンダーグリッド
     const monthEntries = [];
-    for(let cell=0;cell<numRows*7;cell++){
+    for(let cell=0; cell<numRows*7; cell++){
       const dayNum = cell - firstDow + 1;
-      const col = cell%7, row = Math.floor(cell/7);
+      if(dayNum<1 || dayNum>lastDay) continue;
+      const col=cell%7, row=Math.floor(cell/7);
       const cx = PAD + col*SLOT + SLOT/2;
-      const cy = y + row*rowH + rowH/2;
-      if(dayNum>=1 && dayNum<=lastDay){
-        const ds = year+'-'+String(month).padStart(2,'0')+'-'+String(dayNum).padStart(2,'0');
-        const entry = entries[ds];
-        ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2);
-        ctx.fillStyle = entry ? entry.color : tc.empty; ctx.fill();
-        ctx.fillStyle = entry ? 'rgba(255,255,255,0.85)' : tc.text2;
-        ctx.font = `${Math.round(R*0.62)}px "Helvetica Neue",Arial`; ctx.textAlign='center';
-        ctx.fillText(String(dayNum), cx, cy+Math.round(R*0.22));
-        if(entry) monthEntries.push([ds, entry]);
-      }
+      const cy = y + row*rowH + Math.floor(rowH/2);
+      const ds = year+'-'+String(month).padStart(2,'0')+'-'+String(dayNum).padStart(2,'0');
+      const entry = entries[ds];
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2);
+      ctx.fillStyle = entry ? entry.color : tc.empty; ctx.fill();
+      ctx.fillStyle = entry ? 'rgba(255,255,255,0.85)' : tc.text2;
+      ctx.font = `${Math.round(R*0.60)}px "Helvetica Neue",Arial`; ctx.textAlign='center';
+      ctx.fillText(String(dayNum), cx, cy+Math.round(R*0.22));
+      if(entry) monthEntries.push([ds, entry]);
     }
-
-    drawFooter(ctx, W, H, PAD, tc, monthEntries);
+    drawFooter(ctx, W, H, PAD, tc, monthEntries, footerY);
   }
 
   // ---- 季節カード ----
   function drawSeasonCard(year, season) {
     const entries = loadEntries();
-    const { ctx, W, H } = initCanvas();
+    const { ctx, W, H } = initCanvas(1080);
     const tc = THEME_CANVAS[currentTheme] || THEME_CANVAS.black;
     drawBg(ctx, W, H, tc);
     const PAD=72;
-    // ヘッダーラベル
     const seasonName = seasonLabel(season);
-    let headTitle;
-    if(currentLang==='en') headTitle = `${year}  ${seasonName}`;
-    else if(currentLang==='ko') headTitle = `${year}년  ${seasonName}`;
-    else headTitle = `${year}年  ${seasonName}`;
-
+    const headTitle = currentLang==='en' ? `${year}  ${seasonName}`
+                    : currentLang==='ko' ? `${year}년  ${seasonName}`
+                    : `${year}年  ${seasonName}`;
     let y=PAD;
     ctx.textAlign='left'; ctx.fillStyle=tc.text; ctx.font='bold 58px "Helvetica Neue",Arial';
     ctx.fillText('irodori', PAD, y+54);
@@ -1356,29 +1367,46 @@
     y+=120;
     ctx.strokeStyle=tc.divider; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(PAD,y); ctx.lineTo(W-PAD,y); ctx.stroke(); y+=28;
 
-    // 3ヶ月分のドットストリップ（年カードと同じスタイル）
-    const months = SEASON_MONTHS[season]; // [m1,m2,m3]
+    const footerY = H - PAD - 60;
+    const availH  = footerY - y;
+    const SECTION_H = Math.floor(availH / 3);   // 3ヶ月分を等分
+
+    // ドットサイズ（横方向で上限）
     const LABEL_W=52, dotsAreaW=(W-PAD*2)-LABEL_W-12;
-    const SLOT=Math.floor(dotsAreaW/31), DOT=SLOT-4, ROW_H=DOT+14;
+    const SLOT=Math.floor(dotsAreaW/31), DOT=SLOT-2;
+
+    const months = SEASON_MONTHS[season];
     const seasonEntries = [];
-    months.forEach(m => {
-      // 冬の1,2月はyear+1
+    months.forEach((m, idx) => {
       const yr = (season==='winter' && (m===1||m===2)) ? year+1 : year;
       const daysInMonth = new Date(yr,m,0).getDate();
-      const mx = PAD+LABEL_W+12;
-      ctx.fillStyle=tc.monthLabel; ctx.font='15px "Helvetica Neue",Arial'; ctx.textAlign='right';
-      ctx.fillText(t('monthLabel',m), PAD+LABEL_W, y+DOT-5);
+      const sectionTop = y + idx * SECTION_H;
+
+      // 月名（大きく）
+      const monthNameY = sectionTop + Math.floor(SECTION_H * 0.32);
+      ctx.fillStyle=tc.text; ctx.font='bold 36px "Helvetica Neue",Arial'; ctx.textAlign='left';
+      ctx.fillText(t('monthFull', yr, m), PAD, monthNameY);
+
+      // ドット行（月名の下に配置）
+      const dotY = sectionTop + Math.floor(SECTION_H * 0.60);
+      const mx   = PAD+LABEL_W+12;
       for(let d=1;d<=daysInMonth;d++){
         const ds = yr+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-        const entry=entries[ds], dx=mx+(d-1)*SLOT, r=DOT/2;
-        ctx.beginPath(); ctx.arc(dx+r,y+r,r,0,Math.PI*2);
+        const entry=entries[ds], r=DOT/2;
+        ctx.beginPath(); ctx.arc(mx+(d-1)*SLOT+r, dotY+r, r, 0, Math.PI*2);
         ctx.fillStyle=entry?entry.color:tc.empty; ctx.fill();
         if(entry) seasonEntries.push([ds,entry]);
       }
-      y+=ROW_H;
+
+      // セクション区切り線（最後以外）
+      if(idx < 2){
+        const lineY = sectionTop + SECTION_H - 1;
+        ctx.strokeStyle=tc.divider; ctx.lineWidth=0.5;
+        ctx.beginPath(); ctx.moveTo(PAD,lineY); ctx.lineTo(W-PAD,lineY); ctx.stroke();
+      }
     });
 
-    drawFooter(ctx, W, H, PAD, tc, seasonEntries);
+    drawFooter(ctx, W, H, PAD, tc, seasonEntries, footerY);
   }
 
   // ---- 起動 ----
